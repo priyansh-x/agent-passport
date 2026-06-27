@@ -7,6 +7,12 @@ export function createApi(issuer: PassportIssuer, db: PassportDB) {
 
   app.get('/health', (c) => c.json({ status: 'ok' }));
 
+  app.get('/v1/passports', (c) => {
+    const rows = db.listPassports();
+    const passports = rows.map((r) => JSON.parse(r.payload));
+    return c.json({ passports });
+  });
+
   app.post('/v1/passports', async (c) => {
     const body = await c.req.json<{
       principal: string;

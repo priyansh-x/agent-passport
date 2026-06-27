@@ -44,6 +44,10 @@ export class PassportDB {
     ).run(id, payload, signature, publicKey);
   }
 
+  listPassports() {
+    return this.db.prepare('SELECT * FROM passports ORDER BY created_at DESC').all() as Array<{ id: string; payload: string; signature: string; public_key: string }>;
+  }
+
   getPassport(id: string) {
     return this.db.prepare('SELECT * FROM passports WHERE id = ?').get(id) as
       | { id: string; payload: string; signature: string; public_key: string }
