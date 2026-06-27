@@ -1,5 +1,5 @@
 {
-  "name": "@agent-passport/server",
+  "name": "@passport-agent/server",
   "version": "0.0.1",
   "description": "Local passport authority server for development",
   "type": "module",
@@ -20,11 +20,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/priyansh-x/agent-passport",
+    "url": "https://github.com/priyansh-x/passport-agent",
     "directory": "packages/server"
   },
   "dependencies": {
-    "@agent-passport/core": "workspace:*",
+    "@passport-agent/core": "workspace:*",
     "@hono/node-server": "^2.0.6",
     "better-sqlite3": "^12.11.1",
     "hono": "^4.12.27"

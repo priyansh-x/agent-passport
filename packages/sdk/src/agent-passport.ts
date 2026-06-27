@@ -1,5 +1,5 @@
-import type { SignedPassport, AuthorizeResult, AuditEntry } from '@agent-passport/core';
-import { PassportIssuer } from '@agent-passport/core';
+import type { SignedPassport, AuthorizeResult, AuditEntry } from '@passport-agent/core';
+import { PassportIssuer } from '@passport-agent/core';
 import { getDefaultAuthority } from './authority.js';
 
 export interface IssueConfig {

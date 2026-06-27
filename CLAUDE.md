@@ -22,7 +22,7 @@ Before an agent calls a tool or API, it must present a **passport** — a signed
 ```
 packages/
   core/          — token creation, validation, policy engine
-  sdk/           — developer-facing API (npm install agent-passport)
+  sdk/           — developer-facing API (npm install @passport-agent/sdk)
   server/        — passport authority service (issue, revoke, audit)
   mcp-plugin/    — MCP middleware integration
 examples/

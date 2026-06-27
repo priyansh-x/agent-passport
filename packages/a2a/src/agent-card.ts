@@ -1,5 +1,5 @@
-import type { SignedPassport } from '@agent-passport/core';
-import { matchesPermission } from '@agent-passport/core';
+import type { SignedPassport } from '@passport-agent/core';
+import { matchesPermission } from '@passport-agent/core';
 
 export interface PassportRequirements {
   requiredPermissions: string[];

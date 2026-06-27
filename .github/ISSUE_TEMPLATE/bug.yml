@@ -21,7 +21,7 @@ body:
     attributes:
       label: Steps to reproduce
       placeholder: |
-        1. Install agent-passport
+        1. Install passport-agent
         2. Call AgentPassport.issue(...)
         3. ...
     validations:

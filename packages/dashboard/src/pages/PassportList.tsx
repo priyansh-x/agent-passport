@@ -56,7 +56,7 @@ export function PassportList() {
       <div className="rounded-xl border border-neutral-200 p-12 text-center">
         <Shield size={32} className="mx-auto mb-4 text-neutral-300" />
         <p className="text-sm text-neutral-500 mb-2">{error}</p>
-        <code className="text-xs text-neutral-400 bg-neutral-50 px-2 py-1 rounded">npx agent-passport-server</code>
+        <code className="text-xs text-neutral-400 bg-neutral-50 px-2 py-1 rounded">npx @passport-agent/server</code>
       </div>
     )
   }

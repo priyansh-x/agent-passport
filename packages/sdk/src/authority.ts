@@ -1,4 +1,4 @@
-import { PassportIssuer } from '@agent-passport/core';
+import { PassportIssuer } from '@passport-agent/core';
 
 export interface AuthorityConfig {
   issuer?: string;

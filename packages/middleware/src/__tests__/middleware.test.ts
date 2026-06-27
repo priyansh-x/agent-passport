@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { PassportIssuer } from '@agent-passport/core';
+import { PassportIssuer } from '@passport-agent/core';
 import { expressPassport } from '../express.js';
 import { fastifyPassport } from '../fastify.js';
 import { nextjsPassport } from '../nextjs.js';

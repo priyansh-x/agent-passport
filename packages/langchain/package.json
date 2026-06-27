@@ -1,5 +1,5 @@
 {
-  "name": "@agent-passport/langchain",
+  "name": "@passport-agent/langchain",
   "version": "0.0.1",
   "description": "LangChain integration for Agent Passport — wrap tools with passport authorization",
   "type": "module",
@@ -20,11 +20,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/priyansh-x/agent-passport",
+    "url": "https://github.com/priyansh-x/passport-agent",
     "directory": "packages/langchain"
   },
   "dependencies": {
-    "@agent-passport/core": "workspace:*"
+    "@passport-agent/core": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^3.0.0"

@@ -1,5 +1,5 @@
 {
-  "name": "@agent-passport/a2a",
+  "name": "@passport-agent/a2a",
   "version": "0.0.1",
   "description": "A2A protocol integration for Agent Passport — Agent Card extensions for passport requirements",
   "type": "module",
@@ -19,7 +19,7 @@
   "files": ["dist"],
   "license": "MIT",
   "dependencies": {
-    "@agent-passport/core": "workspace:*"
+    "@passport-agent/core": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^3.0.0"

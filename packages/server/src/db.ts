@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import type { AuditEntry } from '@agent-passport/core';
+import type { AuditEntry } from '@passport-agent/core';
 
 export class PassportDB {
   private db: Database.Database;

@@ -1,5 +1,5 @@
-import type { SignedPassport } from '@agent-passport/core';
-import { PassportIssuer } from '@agent-passport/core';
+import type { SignedPassport } from '@passport-agent/core';
+import { PassportIssuer } from '@passport-agent/core';
 import { createPassportMiddleware, type MiddlewareConfig, type ToolCallContext } from './middleware.js';
 
 export class PassportToolGuard {

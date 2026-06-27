@@ -20,10 +20,10 @@ importers:
 
   examples/basic:
     dependencies:
-      '@agent-passport/core':
+      '@passport-agent/core':
         specifier: workspace:*
         version: link:../../packages/core
-      agent-passport:
+      '@passport-agent/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
     devDependencies:
@@ -33,10 +33,10 @@ importers:
 
   examples/delegation:
     dependencies:
-      '@agent-passport/core':
+      '@passport-agent/core':
         specifier: workspace:*
         version: link:../../packages/core
-      agent-passport:
+      '@passport-agent/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
     devDependencies:
@@ -46,7 +46,7 @@ importers:
 
   packages/a2a:
     dependencies:
-      '@agent-passport/core':
+      '@passport-agent/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -66,7 +66,7 @@ importers:
 
   packages/crewai:
     dependencies:
-      '@agent-passport/core':
+      '@passport-agent/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -119,7 +119,7 @@ importers:
 
   packages/langchain:
     dependencies:
-      '@agent-passport/core':
+      '@passport-agent/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -129,7 +129,7 @@ importers:
 
   packages/mcp-plugin:
     dependencies:
-      '@agent-passport/core':
+      '@passport-agent/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -139,7 +139,7 @@ importers:
 
   packages/middleware:
     dependencies:
-      '@agent-passport/core':
+      '@passport-agent/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -149,7 +149,7 @@ importers:
 
   packages/sdk:
     dependencies:
-      '@agent-passport/core':
+      '@passport-agent/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -159,12 +159,12 @@ importers:
 
   packages/server:
     dependencies:
-      '@agent-passport/core':
-        specifier: workspace:*
-        version: link:../core
       '@hono/node-server':
         specifier: ^2.0.6
         version: 2.0.6(hono@4.12.27)
+      '@passport-agent/core':
+        specifier: workspace:*
+        version: link:../core
       better-sqlite3:
         specifier: ^12.11.1
         version: 12.11.1

@@ -1,4 +1,4 @@
-import { PassportIssuer, type SignedPassport, type AuthorizeResult } from '@agent-passport/core';
+import { PassportIssuer, type SignedPassport, type AuthorizeResult } from '@passport-agent/core';
 
 export interface MiddlewareConfig {
   issuer: PassportIssuer;

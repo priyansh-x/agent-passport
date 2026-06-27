@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PassportIssuer } from '@agent-passport/core';
+import { PassportIssuer } from '@passport-agent/core';
 import { PassportAgent, createCrew } from '../agent.js';
 
 describe('CrewAI Integration', () => {

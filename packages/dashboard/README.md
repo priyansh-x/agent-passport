@@ -1,4 +1,4 @@
-# @agent-passport/dashboard
+# @passport-agent/dashboard
 
 Web UI for the Agent Passport authority server.
 

@@ -1,7 +1,7 @@
 {
-  "name": "@agent-passport/middleware",
+  "name": "@passport-agent/middleware",
   "version": "0.0.1",
-  "description": "Express, Fastify, and Next.js middleware for agent-passport",
+  "description": "Express, Fastify, and Next.js middleware for passport-agent",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,11 +14,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/priyansh-x/agent-passport",
+    "url": "https://github.com/priyansh-x/passport-agent",
     "directory": "packages/middleware"
   },
   "dependencies": {
-    "@agent-passport/core": "workspace:*"
+    "@passport-agent/core": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^3.0.0"

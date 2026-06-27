@@ -5,8 +5,8 @@ Thanks for your interest in contributing! This project uses a **BDFL + RFC** gov
 ## Quick Start
 
 ```bash
-git clone https://github.com/priyansh-x/agent-passport.git
-cd agent-passport
+git clone https://github.com/priyansh-x/passport-agent.git
+cd passport-agent
 pnpm install
 pnpm build
 pnpm test

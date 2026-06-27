@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { PassportIssuer } from '@agent-passport/core';
+import { PassportIssuer } from '@passport-agent/core';
 import { createPassportMiddleware } from '../middleware.js';
 import { PassportToolGuard } from '../guard.js';
 

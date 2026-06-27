@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { AgentPassport } from '../agent-passport.js';
-import { PassportIssuer } from '@agent-passport/core';
+import { PassportIssuer } from '@passport-agent/core';
 
 describe('AgentPassport SDK', () => {
   function createWithIssuer() {

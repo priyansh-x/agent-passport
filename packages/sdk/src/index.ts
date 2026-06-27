@@ -8,4 +8,4 @@ export type {
   SignedPassport,
   AuthorizeResult,
   AuditEntry,
-} from '@agent-passport/core';
+} from '@passport-agent/core';

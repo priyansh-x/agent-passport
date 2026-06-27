@@ -1,5 +1,5 @@
-import type { SignedPassport, AuthorizeResult } from '@agent-passport/core';
-import { PassportIssuer } from '@agent-passport/core';
+import type { SignedPassport, AuthorizeResult } from '@passport-agent/core';
+import { PassportIssuer } from '@passport-agent/core';
 
 export interface ToolDefinition {
   name: string;

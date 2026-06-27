@@ -5,7 +5,7 @@
 Give every AI agent a cryptographically verifiable passport before it acts on behalf of humans.
 
 ```typescript
-import { AgentPassport } from 'agent-passport';
+import { AgentPassport } from '@passport-agent/sdk';
 
 // Human authorizes an agent with scoped permissions
 const passport = await AgentPassport.issue({

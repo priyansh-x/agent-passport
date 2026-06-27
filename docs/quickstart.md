@@ -3,14 +3,14 @@
 ## Install
 
 ```bash
-npm install agent-passport @agent-passport/core
+npm install @passport-agent/sdk @passport-agent/core
 ```
 
 ## 1. Issue a Passport
 
 ```typescript
-import { AgentPassport } from 'agent-passport';
-import { PassportIssuer } from '@agent-passport/core';
+import { AgentPassport } from '@passport-agent/sdk';
+import { PassportIssuer } from '@passport-agent/core';
 
 const issuer = new PassportIssuer();
 
@@ -67,7 +67,7 @@ for (const entry of passport.auditLog) {
 ## Using the MCP Plugin
 
 ```typescript
-import { PassportToolGuard } from '@agent-passport/mcp';
+import { PassportToolGuard } from '@passport-agent/mcp';
 
 const guard = new PassportToolGuard({ issuer });
 
@@ -83,7 +83,7 @@ const result = guard.guard(
 ## Running the Local Authority Server
 
 ```bash
-npx agent-passport-server
+npx @passport-agent/server
 # Server starts at http://localhost:3100
 
 # Issue a passport via API

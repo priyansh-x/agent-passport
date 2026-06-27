@@ -1,5 +1,5 @@
 {
-  "name": "@agent-passport/core",
+  "name": "@passport-agent/core",
   "version": "0.0.1",
   "description": "Core protocol engine for Agent Passport — token creation, validation, and policy enforcement",
   "type": "module",
@@ -23,7 +23,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/priyansh-x/agent-passport",
+    "url": "https://github.com/priyansh-x/passport-agent",
     "directory": "packages/core"
   },
   "devDependencies": {

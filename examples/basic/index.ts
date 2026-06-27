@@ -1,5 +1,5 @@
-import { AgentPassport } from 'agent-passport';
-import { PassportIssuer } from '@agent-passport/core';
+import { AgentPassport } from '@passport-agent/sdk';
+import { PassportIssuer } from '@passport-agent/core';
 
 const issuer = new PassportIssuer();
 

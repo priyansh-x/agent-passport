@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { serve } from '@hono/node-server';
-import { PassportIssuer } from '@agent-passport/core';
+import { PassportIssuer } from '@passport-agent/core';
 import { createApi } from './api.js';
 import { PassportDB } from './db.js';
 

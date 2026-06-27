@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { PassportIssuer } from '@agent-passport/core';
+import { PassportIssuer } from '@passport-agent/core';
 import { withPassport, createPassportToolkit, type ToolDefinition } from '../wrapper.js';
 
 describe('LangChain Integration', () => {

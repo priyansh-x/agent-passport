@@ -1,5 +1,5 @@
 {
-  "name": "@agent-passport/crewai",
+  "name": "@passport-agent/crewai",
   "version": "0.0.1",
   "description": "CrewAI integration for Agent Passport — inject passport authorization into agent lifecycles",
   "type": "module",
@@ -19,7 +19,7 @@
   "files": ["dist"],
   "license": "MIT",
   "dependencies": {
-    "@agent-passport/core": "workspace:*"
+    "@passport-agent/core": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^3.0.0"

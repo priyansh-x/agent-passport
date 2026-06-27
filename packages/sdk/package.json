@@ -1,5 +1,5 @@
 {
-  "name": "agent-passport",
+  "name": "@passport-agent/sdk",
   "version": "0.0.1",
   "description": "The Stripe for agent authorization — give every AI agent a cryptographically verifiable passport",
   "type": "module",
@@ -20,11 +20,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/priyansh-x/agent-passport",
+    "url": "https://github.com/priyansh-x/passport-agent",
     "directory": "packages/sdk"
   },
   "dependencies": {
-    "@agent-passport/core": "workspace:*"
+    "@passport-agent/core": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^3.0.0"

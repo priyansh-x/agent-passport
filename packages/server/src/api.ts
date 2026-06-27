@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { PassportIssuer } from '@agent-passport/core';
+import { PassportIssuer } from '@passport-agent/core';
 import { PassportDB } from './db.js';
 
 export function createApi(issuer: PassportIssuer, db: PassportDB) {

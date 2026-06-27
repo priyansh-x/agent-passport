@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PassportIssuer } from '@agent-passport/core';
+import { PassportIssuer } from '@passport-agent/core';
 import { createAgentCard, validatePassportForCard } from '../agent-card.js';
 
 describe('A2A Agent Card Integration', () => {
