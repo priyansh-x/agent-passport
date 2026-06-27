@@ -1,0 +1,30 @@
+{
+  "name": "@agent-passport/server",
+  "version": "0.0.1",
+  "description": "Local passport authority server for development",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "agent-passport-server": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "dev": "tsx src/cli.ts",
+    "lint": "tsc --noEmit"
+  },
+  "files": ["dist"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/priyansh-x/agent-passport",
+    "directory": "packages/server"
+  },
+  "dependencies": {
+    "@agent-passport/core": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "@agent-passport/mcp",
+  "version": "0.0.1",
+  "description": "MCP middleware for Agent Passport — protect tool calls with passport authorization",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "files": ["dist"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/priyansh-x/agent-passport",
+    "directory": "packages/mcp-plugin"
+  },
+  "dependencies": {
+    "@agent-passport/core": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0"
+  }
+}

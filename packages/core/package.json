@@ -1,0 +1,30 @@
+{
+  "name": "@agent-passport/core",
+  "version": "0.0.1",
+  "description": "Core protocol engine for Agent Passport — token creation, validation, and policy enforcement",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "files": ["dist"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/priyansh-x/agent-passport",
+    "directory": "packages/core"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0"
+  }
+}

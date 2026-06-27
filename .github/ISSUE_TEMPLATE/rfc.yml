@@ -1,0 +1,36 @@
+name: RFC (Protocol/API Change)
+description: Propose a significant change to the protocol or API
+title: "[RFC]: "
+labels: ["rfc", "discussion"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One paragraph explaining the change
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why should we do this? What problem does it solve?
+    validations:
+      required: true
+  - type: textarea
+    id: design
+    attributes:
+      label: Detailed Design
+      description: How would this work? Include code examples if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: drawbacks
+    attributes:
+      label: Drawbacks
+      description: What are the tradeoffs?
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: What else did you consider?
