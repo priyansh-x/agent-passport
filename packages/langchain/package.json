@@ -1,0 +1,32 @@
+{
+  "name": "@agent-passport/langchain",
+  "version": "0.0.1",
+  "description": "LangChain integration for Agent Passport — wrap tools with passport authorization",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "files": ["dist"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/priyansh-x/agent-passport",
+    "directory": "packages/langchain"
+  },
+  "dependencies": {
+    "@agent-passport/core": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0"
+  }
+}

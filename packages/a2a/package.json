@@ -1,0 +1,27 @@
+{
+  "name": "@agent-passport/a2a",
+  "version": "0.0.1",
+  "description": "A2A protocol integration for Agent Passport — Agent Card extensions for passport requirements",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "files": ["dist"],
+  "license": "MIT",
+  "dependencies": {
+    "@agent-passport/core": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0"
+  }
+}

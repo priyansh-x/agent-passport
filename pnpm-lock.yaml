@@ -44,7 +44,37 @@ importers:
         specifier: ^4.19.0
         version: 4.22.4
 
+  packages/a2a:
+    dependencies:
+      '@agent-passport/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(tsx@4.22.4)
+
   packages/core:
+    devDependencies:
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(tsx@4.22.4)
+
+  packages/crewai:
+    dependencies:
+      '@agent-passport/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(tsx@4.22.4)
+
+  packages/langchain:
+    dependencies:
+      '@agent-passport/core':
+        specifier: workspace:*
+        version: link:../core
     devDependencies:
       vitest:
         specifier: ^3.0.0
