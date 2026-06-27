@@ -55,6 +55,10 @@ importers:
         version: 3.2.6(@types/node@24.13.2)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.4)
 
   packages/core:
+    dependencies:
+      '@biscuit-auth/biscuit-wasm':
+        specifier: ^0.6.0
+        version: 0.6.0
     devDependencies:
       vitest:
         specifier: ^3.0.0
@@ -173,6 +177,10 @@ packages:
   '@babel/runtime@7.29.7':
     resolution: {integrity: sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==}
     engines: {node: '>=6.9.0'}
+
+  '@biscuit-auth/biscuit-wasm@0.6.0':
+    resolution: {integrity: sha512-QM4rZU+f/WI1tr2vPMCErrGXrJdfK4mTiY1m/JyR1eIiOIJOzoHUHf3Z+hE2a1+Dt9vm6wgGyJg89S871JN7BQ==}
+    engines: {node: '>=22.0.0'}
 
   '@changesets/apply-release-plan@7.1.1':
     resolution: {integrity: sha512-9qPCm/rLx/xoOFXIHGB229+4GOL76S4MC+7tyOuTsR6+1jYlfFDQORdvwR5hDA6y4FL2BPt3qpbcQIS+dW85LA==}
@@ -1814,6 +1822,8 @@ packages:
 snapshots:
 
   '@babel/runtime@7.29.7': {}
+
+  '@biscuit-auth/biscuit-wasm@0.6.0': {}
 
   '@changesets/apply-release-plan@7.1.1':
     dependencies:

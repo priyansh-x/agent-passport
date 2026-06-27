@@ -1,4 +1,5 @@
 export { PassportIssuer } from './passport.js';
+export { BiscuitIssuer, type BiscuitPassport } from './biscuit.js';
 export { RevocationList } from './revocation.js';
 export { AuditLog } from './audit.js';
 export { matchesPermission, authorize, isSubsetPermissions } from './policy.js';
