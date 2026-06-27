@@ -137,6 +137,16 @@ importers:
         specifier: ^3.0.0
         version: 3.2.6(@types/node@24.13.2)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.4)
 
+  packages/middleware:
+    dependencies:
+      '@agent-passport/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(@types/node@24.13.2)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.4)
+
   packages/sdk:
     dependencies:
       '@agent-passport/core':
