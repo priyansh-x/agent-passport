@@ -34,6 +34,29 @@ describe('Passport Authority API', () => {
     });
   });
 
+  describe('GET /v1/passports', () => {
+    it('lists all passports', async () => {
+      const empty = await req('GET', '/v1/passports');
+      expect((await empty.json()).passports).toHaveLength(0);
+
+      await req('POST', '/v1/passports', {
+        principal: 'user:alice@test.com',
+        agent: 'agent:a',
+        permissions: ['read'],
+      });
+      await req('POST', '/v1/passports', {
+        principal: 'user:bob@test.com',
+        agent: 'agent:b',
+        permissions: ['write'],
+      });
+
+      const res = await req('GET', '/v1/passports');
+      const data = await res.json();
+      expect(data.passports).toHaveLength(2);
+      expect(data.passports[0].sub).toBeTruthy();
+    });
+  });
+
   describe('GET /v1/passports/:id', () => {
     it('retrieves a passport', async () => {
       const create = await req('POST', '/v1/passports', {
