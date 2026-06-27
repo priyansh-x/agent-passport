@@ -14,7 +14,9 @@
     "dev": "tsx src/cli.ts",
     "lint": "tsc --noEmit"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -22,9 +24,13 @@
     "directory": "packages/server"
   },
   "dependencies": {
-    "@agent-passport/core": "workspace:*"
+    "@agent-passport/core": "workspace:*",
+    "@hono/node-server": "^2.0.6",
+    "better-sqlite3": "^12.11.1",
+    "hono": "^4.12.27"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "vitest": "^3.0.0"
   }
 }
