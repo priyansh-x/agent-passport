@@ -51,6 +51,42 @@ export function createApi(issuer: PassportIssuer, db: PassportDB) {
     });
   });
 
+  // Token introspection endpoint (RFC 7662-style)
+  app.post('/v1/passports/:id/introspect', (c) => {
+    const id = c.req.param('id');
+    const row = db.getPassport(id);
+    if (!row) {
+      return c.json({ active: false }, 200);
+    }
+
+    const payload = JSON.parse(row.payload);
+    const revoked = db.isRevoked(id);
+    const expired = Date.now() > payload.exp;
+    const active = !revoked && !expired;
+    const spent = db.getSpent(id);
+
+    return c.json({
+      active,
+      id: payload.id,
+      sub: payload.sub,
+      principal: payload.principal,
+      iss: payload.iss,
+      iat: payload.iat,
+      exp: payload.exp,
+      permissions: payload.permissions,
+      limits: {
+        maxSpend: payload.limits.maxSpend,
+        currency: payload.limits.currency,
+        spent,
+        remaining: Math.max(0, payload.limits.maxSpend - spent),
+      },
+      revoked,
+      expired,
+      parentId: payload.parentId,
+      publicKey: row.public_key,
+    });
+  });
+
   app.post('/v1/passports/:id/verify', (c) => {
     const id = c.req.param('id');
     const row = db.getPassport(id);
@@ -74,7 +110,15 @@ export function createApi(issuer: PassportIssuer, db: PassportDB) {
     const signed = issuer.getPassport(id);
     if (!signed) return c.json({ error: 'Passport not found' }, 404);
 
-    const result = issuer.authorize(signed, body.action, body.spendAmount ?? 0);
+    const currentSpent = db.getSpent(id);
+    const spendAmount = body.spendAmount ?? 0;
+
+    const result = issuer.authorize(signed, body.action, spendAmount);
+
+    // Use DB-backed spend tracking instead of in-memory
+    if (result.allowed && spendAmount > 0) {
+      db.addSpend(id, spendAmount, signed.payload.limits.currency);
+    }
 
     db.addAuditEntry({
       passportId: id,
@@ -85,7 +129,11 @@ export function createApi(issuer: PassportIssuer, db: PassportDB) {
       timestamp: Date.now(),
     });
 
-    return c.json(result);
+    return c.json({
+      ...result,
+      spent: currentSpent + (result.allowed ? spendAmount : 0),
+      remaining: Math.max(0, signed.payload.limits.maxSpend - currentSpent - (result.allowed ? spendAmount : 0)),
+    });
   });
 
   app.post('/v1/passports/:id/delegate', async (c) => {
@@ -115,6 +163,9 @@ export function createApi(issuer: PassportIssuer, db: PassportDB) {
         child.publicKey,
       );
 
+      // Persist delegation relationship for cascade revocation
+      db.registerChild(id, child.payload.id);
+
       return c.json({ passport: child.payload, id: child.payload.id }, 201);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -124,10 +175,10 @@ export function createApi(issuer: PassportIssuer, db: PassportDB) {
 
   app.post('/v1/passports/:id/revoke', (c) => {
     const id = c.req.param('id');
-    const revoked = issuer.revoke(id);
-    for (const rid of revoked) {
-      db.addRevocation(rid);
-    }
+    // Use DB-backed cascade revocation (survives restarts)
+    const revoked = db.cascadeRevoke(id);
+    // Also update in-memory state
+    issuer.revoke(id);
     return c.json({ revoked });
   });
 

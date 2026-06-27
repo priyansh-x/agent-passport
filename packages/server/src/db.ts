@@ -35,6 +35,20 @@ export class PassportDB {
       );
 
       CREATE INDEX IF NOT EXISTS idx_audit_passport ON audit_log(passport_id);
+
+      CREATE TABLE IF NOT EXISTS spend_tracking (
+        passport_id TEXT PRIMARY KEY,
+        spent REAL NOT NULL DEFAULT 0,
+        currency TEXT NOT NULL DEFAULT 'USD'
+      );
+
+      CREATE TABLE IF NOT EXISTS delegation_tree (
+        parent_id TEXT NOT NULL,
+        child_id TEXT NOT NULL,
+        PRIMARY KEY (parent_id, child_id)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_delegation_child ON delegation_tree(child_id);
     `);
   }
 
@@ -101,6 +115,46 @@ export class PassportDB {
       reason: r.reason ?? undefined,
       timestamp: r.timestamp,
     }));
+  }
+
+  getSpent(passportId: string): number {
+    const row = this.db.prepare(
+      'SELECT spent FROM spend_tracking WHERE passport_id = ?',
+    ).get(passportId) as { spent: number } | undefined;
+    return row?.spent ?? 0;
+  }
+
+  addSpend(passportId: string, amount: number, currency = 'USD') {
+    this.db.prepare(
+      'INSERT INTO spend_tracking (passport_id, spent, currency) VALUES (?, ?, ?) ON CONFLICT(passport_id) DO UPDATE SET spent = spent + ?',
+    ).run(passportId, amount, currency, amount);
+  }
+
+  registerChild(parentId: string, childId: string) {
+    this.db.prepare(
+      'INSERT OR IGNORE INTO delegation_tree (parent_id, child_id) VALUES (?, ?)',
+    ).run(parentId, childId);
+  }
+
+  getChildren(parentId: string): string[] {
+    const rows = this.db.prepare(
+      'SELECT child_id FROM delegation_tree WHERE parent_id = ?',
+    ).all(parentId) as Array<{ child_id: string }>;
+    return rows.map((r) => r.child_id);
+  }
+
+  cascadeRevoke(passportId: string): string[] {
+    const revoked: string[] = [];
+    const queue = [passportId];
+    while (queue.length > 0) {
+      const id = queue.pop()!;
+      if (this.isRevoked(id)) continue;
+      this.addRevocation(id);
+      revoked.push(id);
+      const children = this.getChildren(id);
+      for (const child of children) queue.push(child);
+    }
+    return revoked;
   }
 
   close() {

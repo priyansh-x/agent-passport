@@ -181,6 +181,100 @@ describe('Passport Authority API', () => {
     });
   });
 
+  describe('POST /v1/passports/:id/introspect', () => {
+    it('returns full token introspection for active passport', async () => {
+      const create = await req('POST', '/v1/passports', {
+        principal: 'user:alice@test.com',
+        agent: 'agent:bot',
+        permissions: ['read', 'write'],
+        limits: { maxSpend: 200 },
+      });
+      const { id } = await create.json();
+
+      const res = await req('POST', `/v1/passports/${id}/introspect`);
+      const data = await res.json();
+      expect(data.active).toBe(true);
+      expect(data.sub).toBe('agent:bot');
+      expect(data.principal).toBe('user:alice@test.com');
+      expect(data.limits.maxSpend).toBe(200);
+      expect(data.limits.spent).toBe(0);
+      expect(data.limits.remaining).toBe(200);
+      expect(data.revoked).toBe(false);
+      expect(data.expired).toBe(false);
+    });
+
+    it('returns active:false for unknown passport', async () => {
+      const res = await req('POST', '/v1/passports/unknown/introspect');
+      const data = await res.json();
+      expect(data.active).toBe(false);
+    });
+
+    it('reflects spend tracking after authorize', async () => {
+      const create = await req('POST', '/v1/passports', {
+        principal: 'user:alice@test.com',
+        agent: 'agent:bot',
+        permissions: ['purchase'],
+        limits: { maxSpend: 100 },
+      });
+      const { id } = await create.json();
+
+      await req('POST', `/v1/passports/${id}/authorize`, { action: 'purchase', spendAmount: 30 });
+
+      const res = await req('POST', `/v1/passports/${id}/introspect`);
+      const data = await res.json();
+      expect(data.limits.spent).toBe(30);
+      expect(data.limits.remaining).toBe(70);
+    });
+  });
+
+  describe('persistent spend tracking', () => {
+    it('tracks spend across multiple authorize calls', async () => {
+      const create = await req('POST', '/v1/passports', {
+        principal: 'user:alice@test.com',
+        agent: 'agent:bot',
+        permissions: ['purchase'],
+        limits: { maxSpend: 100 },
+      });
+      const { id } = await create.json();
+
+      const r1 = await req('POST', `/v1/passports/${id}/authorize`, { action: 'purchase', spendAmount: 40 });
+      expect((await r1.json()).remaining).toBe(60);
+
+      const r2 = await req('POST', `/v1/passports/${id}/authorize`, { action: 'purchase', spendAmount: 40 });
+      expect((await r2.json()).remaining).toBe(20);
+
+      const r3 = await req('POST', `/v1/passports/${id}/authorize`, { action: 'purchase', spendAmount: 30 });
+      expect((await r3.json()).allowed).toBe(false);
+    });
+  });
+
+  describe('persistent cascade revocation', () => {
+    it('cascade revokes via DB-backed delegation tree', async () => {
+      const parent = await req('POST', '/v1/passports', {
+        principal: 'user:alice@test.com',
+        agent: 'agent:root',
+        permissions: ['read', 'write'],
+        limits: { maxSpend: 500 },
+      });
+      const { id: parentId } = await parent.json();
+
+      const child = await req('POST', `/v1/passports/${parentId}/delegate`, {
+        agent: 'agent:child',
+        permissions: ['read'],
+        limits: { maxSpend: 100 },
+      });
+      const { id: childId } = await child.json();
+
+      const res = await req('POST', `/v1/passports/${parentId}/revoke`);
+      const data = await res.json();
+      expect(data.revoked).toContain(parentId);
+      expect(data.revoked).toContain(childId);
+
+      const childVerify = await req('POST', `/v1/passports/${childId}/verify`);
+      expect((await childVerify.json()).revoked).toBe(true);
+    });
+  });
+
   describe('GET /health', () => {
     it('returns ok', async () => {
       const res = await req('GET', '/health');
