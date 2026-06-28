@@ -97,7 +97,7 @@
       justify-content: center;
       align-items: center;
       text-align: center;
-      padding: 80px 24px 32px;
+      padding: 64px 24px 20px;
     }
 
     .hero-label {
@@ -109,7 +109,7 @@
       padding: 6px 14px;
       border: 1px solid var(--rule);
       border-radius: 100px;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
       opacity: 0; animation: fadeIn 0.6s ease 0.2s forwards;
     }
 
@@ -117,7 +117,7 @@
 
     .hero h1 {
       font-family: var(--sans);
-      font-size: clamp(28px, 4.2vw, 46px);
+      font-size: clamp(24px, 3.5vw, 38px);
       font-weight: 700;
       letter-spacing: -0.03em;
       line-height: 1.1;
@@ -157,9 +157,10 @@
     /* ── Flow Canvas ── */
     .flow-canvas {
       width: 100%;
-      max-width: 800px;
-      margin: 0 auto;
+      max-width: 720px;
+      margin: 20px auto 0;
       opacity: 0; animation: fadeUp 0.8s ease 0.6s forwards;
+      position: relative;
     }
 
     .flow-svg {
@@ -168,56 +169,39 @@
       overflow: visible;
     }
 
-    .flow-node {
-      cursor: default;
-    }
-
-    .flow-node rect, .flow-node circle {
-      transition: stroke-opacity 0.3s;
-    }
-    .flow-node:hover rect, .flow-node:hover circle {
-      stroke-opacity: 1 !important;
-    }
-
     .flow-line {
       stroke-dasharray: 200;
       stroke-dashoffset: 200;
     }
-
     .flow-line.animate {
-      animation: drawLine 0.6s ease forwards;
+      transition: stroke-dashoffset 0.7s ease;
+      stroke-dashoffset: 0;
     }
 
-    @keyframes drawLine {
-      to { stroke-dashoffset: 0; }
+    .flow-node {
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .flow-node.show {
+      opacity: 1;
+      transform: translateY(0);
     }
 
     .flow-dot {
       opacity: 0;
+      r: 3;
     }
-    .flow-dot.animate {
-      animation: dotTravel 0.8s ease forwards;
-    }
-    @keyframes dotTravel {
-      0% { opacity: 1; offset-distance: 0%; }
-      100% { opacity: 1; offset-distance: 100%; }
-    }
-
-    .flow-label {
-      font-family: var(--mono);
-      font-size: 10px;
-      fill: var(--muted);
-      letter-spacing: 0.05em;
-    }
-
-    .flow-badge {
-      opacity: 0;
-      transform: scale(0.8);
-      transition: all 0.3s ease;
-    }
-    .flow-badge.show {
+    .flow-dot.show {
       opacity: 1;
-      transform: scale(1);
+    }
+
+    @keyframes pulse {
+      0%, 100% { r: 3; opacity: 1; }
+      50% { r: 5; opacity: 0.6; }
+    }
+    .flow-dot.pulse {
+      animation: pulse 1.5s ease infinite;
     }
 
     .terminal {
@@ -674,8 +658,11 @@
       background: var(--rule);
       border: 1px solid var(--rule);
       border-radius: 8px;
-      overflow: hidden;
     }
+    .int-card:first-child { border-radius: 8px 0 0 0; }
+    .int-card:nth-child(4) { border-radius: 0 8px 0 0; }
+    .int-card:nth-child(5) { border-radius: 0 0 0 8px; }
+    .int-card:last-child { border-radius: 0 0 8px 0; }
 
     .int-card {
       padding: 28px 22px;
@@ -695,8 +682,8 @@
       display: none;
       position: absolute;
       bottom: calc(100% + 10px);
-      left: 50%;
-      transform: translateX(-50%);
+      left: 0;
+      transform: none;
       width: 340px;
       padding: 16px 18px;
       background: #18181b;
@@ -714,12 +701,27 @@
       content: '';
       position: absolute;
       top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
+      left: 40px;
+      transform: none;
       border: 6px solid transparent;
       border-top-color: rgba(234,179,8,0.2);
     }
     .int-card:hover .int-tooltip { display: block; }
+    /* Bottom row: tooltip opens below */
+    .int-card.tip-below .int-tooltip {
+      bottom: auto;
+      top: calc(100% + 10px);
+      left: 0;
+      transform: none;
+    }
+    .int-card.tip-below .int-tooltip::after {
+      top: auto;
+      bottom: 100%;
+      left: 40px;
+      transform: none;
+      border-top-color: transparent;
+      border-bottom-color: rgba(234,179,8,0.2);
+    }
 
     .tt-kw { color: #c4b5fd; }
     .tt-fn { color: #93c5fd; }
@@ -960,94 +962,73 @@
       <h1>Every agent gets a <span class="hl">passport</span> before it acts</h1>
 
       <div class="flow-canvas" id="flow-canvas">
-        <svg class="flow-svg" viewBox="0 0 800 320" xmlns="http://www.w3.org/2000/svg">
-          <!-- Grid dots background -->
-          <pattern id="grid-dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-            <circle cx="10" cy="10" r="0.5" fill="rgba(255,255,255,0.08)" />
-          </pattern>
-          <rect width="800" height="320" fill="url(#grid-dots)" rx="12" />
+        <svg class="flow-svg" viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
 
-          <!-- ─── Connection lines (animated) ─── -->
-          <path id="line1" class="flow-line" d="M 165 90 C 220 90, 230 90, 270 90" stroke="#eab308" stroke-width="1.5" fill="none" stroke-opacity="0.5" />
-          <path id="line2" class="flow-line" d="M 455 90 C 510 90, 520 90, 545 90" stroke="#eab308" stroke-width="1.5" fill="none" stroke-opacity="0.5" />
+          <!-- ─── Lines ─── -->
+          <path id="ln1" class="flow-line" d="M 130 45 L 175 45" stroke="#eab308" stroke-width="1.5" fill="none" stroke-opacity="0.4" />
+          <path id="ln2" class="flow-line" d="M 310 45 L 355 45" stroke="#eab308" stroke-width="1.5" fill="none" stroke-opacity="0.4" />
+          <path id="ln3" class="flow-line" d="M 460 35 L 530 20" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-opacity="0.5" />
+          <path id="ln4" class="flow-line" d="M 460 55 L 530 70" stroke="#ef4444" stroke-width="1.5" fill="none" stroke-opacity="0.5" />
+          <!-- delegation -->
+          <path id="ln5" class="flow-line" d="M 245 80 L 245 110" stroke="#eab308" stroke-width="1" fill="none" stroke-opacity="0.25" stroke-dasharray="4 3" />
+          <path id="ln6" class="flow-line" d="M 310 135 L 355 135" stroke="#eab308" stroke-width="1" fill="none" stroke-opacity="0.2" stroke-dasharray="4 3" />
 
-          <!-- Branch lines to results -->
-          <path id="line3a" class="flow-line" d="M 680 78 C 720 78, 720 60, 740 45" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-opacity="0.5" />
-          <path id="line3b" class="flow-line" d="M 680 102 C 720 102, 720 120, 740 135" stroke="#ef4444" stroke-width="1.5" fill="none" stroke-opacity="0.5" />
+          <!-- ─── Nodes ─── -->
 
-          <!-- Delegation line -->
-          <path id="line4" class="flow-line" d="M 400 130 C 400 175, 400 175, 400 195" stroke="#eab308" stroke-width="1" fill="none" stroke-opacity="0.3" stroke-dasharray="4 4" />
-
-          <!-- ─── Node: Human ─── -->
-          <g class="flow-node" id="node-human">
-            <rect x="40" y="58" width="125" height="64" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-width="1" />
-            <text x="102" y="82" text-anchor="middle" class="flow-label" style="text-transform:uppercase;">HUMAN</text>
-            <text x="102" y="104" text-anchor="middle" fill="#fafaf9" font-family="'Inter',sans-serif" font-size="13" font-weight="600">"Book a flight"</text>
+          <!-- Human -->
+          <g class="flow-node" data-step="0">
+            <rect x="15" y="25" width="115" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" />
+            <text x="72" y="50" text-anchor="middle" font-family="'Inter',sans-serif" font-size="13" fill="#fafaf9" font-weight="600">"Book a flight"</text>
           </g>
 
-          <!-- ─── Node: Passport ─── -->
-          <g class="flow-node" id="node-passport">
-            <rect x="270" y="42" width="185" height="96" rx="8" fill="rgba(234,179,8,0.04)" stroke="rgba(234,179,8,0.25)" stroke-width="1" />
-            <text x="362" y="64" text-anchor="middle" fill="#eab308" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="500" letter-spacing="0.05em">⬡ PASSPORT ISSUED</text>
-            <text x="362" y="84" text-anchor="middle" fill="#a1a1aa" font-family="'JetBrains Mono',monospace" font-size="10">agent: booking-bot</text>
-            <text x="362" y="100" text-anchor="middle" fill="#86efac" font-family="'JetBrains Mono',monospace" font-size="10">scope: calendar:* email:send</text>
-            <text x="362" y="116" text-anchor="middle" fill="#fbbf24" font-family="'JetBrains Mono',monospace" font-size="10">budget: $500 · ttl: 24h</text>
+          <!-- Passport -->
+          <g class="flow-node" data-step="1">
+            <rect x="175" y="15" width="135" height="65" rx="8" fill="rgba(234,179,8,0.04)" stroke="rgba(234,179,8,0.25)" />
+            <text x="242" y="34" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="#eab308" font-weight="500">⬡ passport</text>
+            <text x="242" y="50" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" fill="#86efac">calendar:* email:send</text>
+            <text x="242" y="65" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" fill="#fbbf24">$500 · 24h</text>
           </g>
 
-          <!-- ─── Node: authorize() ─── -->
-          <g class="flow-node" id="node-auth">
-            <rect x="545" y="54" width="135" height="72" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-width="1" />
-            <text x="612" y="78" text-anchor="middle" class="flow-label" style="text-transform:uppercase;">CHECKPOINT</text>
-            <text x="612" y="100" text-anchor="middle" fill="#fafaf9" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="500">authorize()</text>
+          <!-- authorize() -->
+          <g class="flow-node" data-step="2">
+            <rect x="355" y="22" width="105" height="46" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.15)" />
+            <text x="407" y="50" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" fill="#fafaf9" font-weight="500">authorize()</text>
           </g>
 
-          <!-- ─── Result: Allowed ─── -->
-          <g class="flow-node" id="node-allow">
-            <rect x="730" y="22" width="55" height="44" rx="22" fill="rgba(34,197,94,0.08)" stroke="rgba(34,197,94,0.35)" stroke-width="1" />
-            <text x="757" y="49" text-anchor="middle" fill="#22c55e" font-family="'Inter',sans-serif" font-size="16" font-weight="700">✓</text>
+          <!-- Allowed -->
+          <g class="flow-node" data-step="3">
+            <rect x="530" y="4" width="155" height="30" rx="15" fill="rgba(34,197,94,0.08)" stroke="rgba(34,197,94,0.3)" />
+            <text x="607" y="24" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="#22c55e" font-weight="500">✓ calendar:write</text>
           </g>
 
-          <!-- ─── Result: Denied ─── -->
-          <g class="flow-node" id="node-deny">
-            <rect x="730" y="114" width="55" height="44" rx="22" fill="rgba(239,68,68,0.08)" stroke="rgba(239,68,68,0.35)" stroke-width="1" />
-            <text x="757" y="141" text-anchor="middle" fill="#ef4444" font-family="'Inter',sans-serif" font-size="16" font-weight="700">✗</text>
+          <!-- Denied -->
+          <g class="flow-node" data-step="3">
+            <rect x="530" y="56" width="155" height="30" rx="15" fill="rgba(239,68,68,0.08)" stroke="rgba(239,68,68,0.3)" />
+            <text x="607" y="76" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="#ef4444" font-weight="500">✗ database:drop</text>
           </g>
 
-          <!-- ─── Labels on results ─── -->
-          <text x="757" y="16" text-anchor="middle" fill="#86efac" font-family="'JetBrains Mono',monospace" font-size="9" opacity="0.7">calendar:write</text>
-          <text x="757" y="172" text-anchor="middle" fill="#fca5a5" font-family="'JetBrains Mono',monospace" font-size="9" opacity="0.7">database:drop</text>
-
-          <!-- ─── Node: Delegated sub-agent ─── -->
-          <g class="flow-node" id="node-delegate">
-            <rect x="310" y="195" width="185" height="64" rx="8" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.08)" stroke-width="1" stroke-dasharray="4 3" />
-            <text x="402" y="218" text-anchor="middle" class="flow-label" style="text-transform:uppercase;">DELEGATED SUB-AGENT</text>
-            <text x="402" y="238" text-anchor="middle" fill="#a1a1aa" font-family="'JetBrains Mono',monospace" font-size="10">email:send only · $0 budget</text>
+          <!-- Delegation row -->
+          <g class="flow-node" data-step="4">
+            <rect x="175" y="110" width="135" height="45" rx="6" fill="rgba(234,179,8,0.02)" stroke="rgba(234,179,8,0.12)" stroke-dasharray="4 3" />
+            <text x="242" y="128" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" fill="#ca8a04">↳ email-agent</text>
+            <text x="242" y="144" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8" fill="#86efac">email:send · $50 · 1h</text>
           </g>
 
-          <!-- ─── Annotation: narrowing ─── -->
-          <text x="430" y="178" fill="#52525b" font-family="'JetBrains Mono',monospace" font-size="9" font-style="italic">permissions only narrow ↓</text>
+          <g class="flow-node" data-step="5">
+            <rect x="355" y="118" width="135" height="35" rx="6" fill="rgba(234,179,8,0.01)" stroke="rgba(234,179,8,0.08)" stroke-dasharray="4 3" />
+            <text x="422" y="134" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8" fill="#a1a1aa">↳↳ notify-bot</text>
+            <text x="422" y="146" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="7" fill="#86efac">email:send (1) · $0</text>
+          </g>
 
-          <!-- ─── Animated data dots (travelling along paths) ─── -->
-          <circle id="dot1" class="flow-dot" r="3" fill="#eab308">
-            <animateMotion dur="0.8s" begin="indefinite" fill="freeze" id="anim-dot1">
-              <mpath href="#line1" />
-            </animateMotion>
-          </circle>
-          <circle id="dot2" class="flow-dot" r="3" fill="#eab308">
-            <animateMotion dur="0.8s" begin="indefinite" fill="freeze" id="anim-dot2">
-              <mpath href="#line2" />
-            </animateMotion>
-          </circle>
-          <circle id="dot3a" class="flow-dot" r="3" fill="#22c55e">
-            <animateMotion dur="0.5s" begin="indefinite" fill="freeze" id="anim-dot3a">
-              <mpath href="#line3a" />
-            </animateMotion>
-          </circle>
-          <circle id="dot3b" class="flow-dot" r="3" fill="#ef4444">
-            <animateMotion dur="0.5s" begin="indefinite" fill="freeze" id="anim-dot3b">
-              <mpath href="#line3b" />
-            </animateMotion>
-          </circle>
+          <!-- "narrows" annotation -->
+          <text x="262" y="105" font-family="'JetBrains Mono',monospace" font-size="7" fill="#52525b" font-style="italic">permissions narrow ↓</text>
+
+          <!-- Animated dots -->
+          <circle id="dot1" class="flow-dot" cx="155" cy="45" r="3" fill="#eab308" />
+          <circle id="dot2" class="flow-dot" cx="340" cy="45" r="3" fill="#eab308" />
+          <circle id="dot3" class="flow-dot" cx="495" cy="25" r="3" fill="#22c55e" />
+          <circle id="dot4" class="flow-dot" cx="495" cy="65" r="3" fill="#ef4444" />
+
         </svg>
       </div>
 
@@ -1205,28 +1186,28 @@
             <div class="int-hover-hint">hover for example</div>
             <div class="int-tooltip"><span class="tt-kw">const</span> agent = <span class="tt-kw">new</span> <span class="tt-fn">PassportAgent</span>(passport)<br><br>agent.<span class="tt-fn">execute</span>({<br>&nbsp;&nbsp;task: <span class="tt-str">"draft outreach"</span>,<br>&nbsp;&nbsp;requiredPermission: <span class="tt-str">"email:send"</span>,<br>})<br><span class="tt-cmt">// denied tasks fail gracefully</span></div>
           </div>
-          <div class="int-card">
+          <div class="int-card tip-below">
             <div class="int-name">Fastify</div>
             <div class="int-desc">Plugin with automatic action extraction from routes.</div>
             <div class="int-code">@passport-agent/middleware</div>
             <div class="int-hover-hint">hover for example</div>
             <div class="int-tooltip">fastify.<span class="tt-fn">register</span>(passportPlugin, { issuer })<br><br><span class="tt-cmt">// GET /users → "users:get"</span><br><span class="tt-cmt">// auto-extracts action from method + path</span><br><span class="tt-cmt">// attaches context to request</span></div>
           </div>
-          <div class="int-card">
+          <div class="int-card tip-below">
             <div class="int-name">Next.js</div>
             <div class="int-desc">API route middleware for server actions and edge.</div>
             <div class="int-code">@passport-agent/middleware</div>
             <div class="int-hover-hint">hover for example</div>
             <div class="int-tooltip"><span class="tt-kw">export</span> <span class="tt-kw">const</span> POST = <span class="tt-fn">withPassport</span>(handler, {<br>&nbsp;&nbsp;issuer,<br>&nbsp;&nbsp;action: <span class="tt-str">"api:users:create"</span>,<br>})<br><span class="tt-cmt">// works with App Router + Edge</span></div>
           </div>
-          <div class="int-card">
+          <div class="int-card tip-below">
             <div class="int-name">A2A</div>
             <div class="int-desc">Agent Card extensions for cross-agent authorization.</div>
             <div class="int-code">@passport-agent/a2a</div>
             <div class="int-hover-hint">hover for example</div>
             <div class="int-tooltip"><span class="tt-kw">const</span> card = {<br>&nbsp;&nbsp;passportRequirements: {<br>&nbsp;&nbsp;&nbsp;&nbsp;requiredPermissions: [<span class="tt-str">"search:*"</span>],<br>&nbsp;&nbsp;&nbsp;&nbsp;minSpendLimit: <span class="tt-str">100</span>,<br>&nbsp;&nbsp;}<br>}<br><span class="tt-cmt">// validates passport before agent-to-agent calls</span></div>
           </div>
-          <div class="int-card">
+          <div class="int-card tip-below">
             <div class="int-name">Authority Server</div>
             <div class="int-desc">Self-hosted REST API with SQLite, audit logs, dashboard.</div>
             <div class="int-code">@passport-agent/server</div>
@@ -1448,49 +1429,49 @@
 
     // ── Flow canvas animation ──
     function animateFlow() {
-      const lines = ['line1', 'line2', 'line3a', 'line3b'];
-      const dots = ['anim-dot1', 'anim-dot2', 'anim-dot3a', 'anim-dot3b'];
-      const delays = [0, 900, 1800, 2000];
+      const lines = ['ln1','ln2','ln3','ln4','ln5','ln6'];
+      const dots = ['dot1','dot2','dot3','dot4'];
+      const nodes = document.querySelectorAll('.flow-node');
+      const lineDelays = [0, 500, 1000, 1100, 1600, 2000];
+      const nodeDelays = [0, 200, 600, 1200, 1800, 2200];
 
+      // Reset
+      lines.forEach(id => { const el = document.getElementById(id); if(el) el.classList.remove('animate'); });
+      dots.forEach(id => { const el = document.getElementById(id); if(el) { el.classList.remove('show','pulse'); }});
+      nodes.forEach(n => n.classList.remove('show'));
+
+      // Animate nodes
+      nodes.forEach(n => {
+        const step = parseInt(n.dataset.step);
+        setTimeout(() => n.classList.add('show'), nodeDelays[step] || step * 400);
+      });
+
+      // Animate lines
       lines.forEach((id, i) => {
         setTimeout(() => {
           const el = document.getElementById(id);
           if (el) el.classList.add('animate');
-        }, delays[i]);
+        }, lineDelays[i]);
       });
 
-      dots.forEach((id, i) => {
-        setTimeout(() => {
-          const dot = document.getElementById(id.replace('anim-', ''));
-          const anim = document.getElementById(id);
-          if (dot) dot.style.opacity = '1';
-          if (anim) anim.beginElement();
-        }, delays[i] + 200);
-      });
+      // Dots appear at connection points
+      setTimeout(() => { const d = document.getElementById('dot1'); if(d) d.classList.add('show','pulse'); }, 200);
+      setTimeout(() => { const d = document.getElementById('dot2'); if(d) d.classList.add('show','pulse'); }, 800);
+      setTimeout(() => { const d = document.getElementById('dot3'); if(d) d.classList.add('show','pulse'); }, 1900);
+      setTimeout(() => { const d = document.getElementById('dot4'); if(d) d.classList.add('show','pulse'); }, 1900);
 
-      // Loop the animation
-      setTimeout(() => {
-        lines.forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.classList.remove('animate');
-        });
-        dots.forEach(id => {
-          const dot = document.getElementById(id.replace('anim-', ''));
-          if (dot) dot.style.opacity = '0';
-        });
-        setTimeout(animateFlow, 600);
-      }, 4000);
+      // Loop
+      setTimeout(animateFlow, 6000);
     }
 
-    // Start flow animation when hero is visible
     const flowObs = new IntersectionObserver((entries) => {
       entries.forEach(e => {
         if (e.isIntersecting) {
-          setTimeout(animateFlow, 800);
+          setTimeout(animateFlow, 600);
           flowObs.unobserve(e.target);
         }
       });
-    }, { threshold: 0.3 });
+    }, { threshold: 0.2 });
     const flowCanvas = document.getElementById('flow-canvas');
     if (flowCanvas) flowObs.observe(flowCanvas);
 

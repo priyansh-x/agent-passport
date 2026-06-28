@@ -608,8 +608,11 @@
       background: var(--rule);
       border: 1px solid var(--rule);
       border-radius: 8px;
-      overflow: hidden;
     }
+    .int-card:first-child { border-radius: 8px 0 0 0; }
+    .int-card:nth-child(4) { border-radius: 0 8px 0 0; }
+    .int-card:nth-child(5) { border-radius: 0 0 0 8px; }
+    .int-card:last-child { border-radius: 0 0 8px 0; }
 
     .int-card {
       padding: 28px 22px;
@@ -629,8 +632,8 @@
       display: none;
       position: absolute;
       bottom: calc(100% + 10px);
-      left: 50%;
-      transform: translateX(-50%);
+      left: 0;
+      transform: none;
       width: 340px;
       padding: 16px 18px;
       background: #18181b;
@@ -648,12 +651,26 @@
       content: '';
       position: absolute;
       top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
+      left: 40px;
+      transform: none;
       border: 6px solid transparent;
       border-top-color: rgba(234,179,8,0.2);
     }
     .int-card:hover .int-tooltip { display: block; }
+    .int-card.tip-below .int-tooltip {
+      bottom: auto;
+      top: calc(100% + 10px);
+      left: 0;
+      transform: none;
+    }
+    .int-card.tip-below .int-tooltip::after {
+      top: auto;
+      bottom: 100%;
+      left: 40px;
+      transform: none;
+      border-top-color: transparent;
+      border-bottom-color: rgba(234,179,8,0.2);
+    }
 
     .tt-kw { color: #c4b5fd; }
     .tt-fn { color: #93c5fd; }
@@ -1084,28 +1101,28 @@
             <div class="int-hover-hint">hover for example</div>
             <div class="int-tooltip"><span class="tt-kw">const</span> agent = <span class="tt-kw">new</span> <span class="tt-fn">PassportAgent</span>(passport)<br><br>agent.<span class="tt-fn">execute</span>({<br>&nbsp;&nbsp;task: <span class="tt-str">"draft outreach"</span>,<br>&nbsp;&nbsp;requiredPermission: <span class="tt-str">"email:send"</span>,<br>})<br><span class="tt-cmt">// denied tasks fail gracefully</span></div>
           </div>
-          <div class="int-card">
+          <div class="int-card tip-below">
             <div class="int-name">Fastify</div>
             <div class="int-desc">Plugin with automatic action extraction from routes.</div>
             <div class="int-code">@passport-agent/middleware</div>
             <div class="int-hover-hint">hover for example</div>
             <div class="int-tooltip">fastify.<span class="tt-fn">register</span>(passportPlugin, { issuer })<br><br><span class="tt-cmt">// GET /users → "users:get"</span><br><span class="tt-cmt">// auto-extracts action from method + path</span><br><span class="tt-cmt">// attaches context to request</span></div>
           </div>
-          <div class="int-card">
+          <div class="int-card tip-below">
             <div class="int-name">Next.js</div>
             <div class="int-desc">API route middleware for server actions and edge.</div>
             <div class="int-code">@passport-agent/middleware</div>
             <div class="int-hover-hint">hover for example</div>
             <div class="int-tooltip"><span class="tt-kw">export</span> <span class="tt-kw">const</span> POST = <span class="tt-fn">withPassport</span>(handler, {<br>&nbsp;&nbsp;issuer,<br>&nbsp;&nbsp;action: <span class="tt-str">"api:users:create"</span>,<br>})<br><span class="tt-cmt">// works with App Router + Edge</span></div>
           </div>
-          <div class="int-card">
+          <div class="int-card tip-below">
             <div class="int-name">A2A</div>
             <div class="int-desc">Agent Card extensions for cross-agent authorization.</div>
             <div class="int-code">@passport-agent/a2a</div>
             <div class="int-hover-hint">hover for example</div>
             <div class="int-tooltip"><span class="tt-kw">const</span> card = {<br>&nbsp;&nbsp;passportRequirements: {<br>&nbsp;&nbsp;&nbsp;&nbsp;requiredPermissions: [<span class="tt-str">"search:*"</span>],<br>&nbsp;&nbsp;&nbsp;&nbsp;minSpendLimit: <span class="tt-str">100</span>,<br>&nbsp;&nbsp;}<br>}<br><span class="tt-cmt">// validates passport before agent-to-agent calls</span></div>
           </div>
-          <div class="int-card">
+          <div class="int-card tip-below">
             <div class="int-name">Authority Server</div>
             <div class="int-desc">Self-hosted REST API with SQLite, audit logs, dashboard.</div>
             <div class="int-code">@passport-agent/server</div>
