@@ -260,6 +260,59 @@ describe('PassportIssuer', () => {
       expect(issuer.authorize(grandchild, 'a').allowed).toBe(false);
     });
 
+    it('rejects delegation beyond max depth', () => {
+      const issuer = createIssuer();
+      let current = issuer.issue({
+        principal: 'user:alice@test.com',
+        agent: 'agent:level-0',
+        permissions: ['read'],
+      });
+
+      for (let i = 1; i <= 10; i++) {
+        current = issuer.delegate(current, {
+          agent: `agent:level-${i}`,
+          permissions: ['read'],
+        });
+      }
+
+      expect(() =>
+        issuer.delegate(current, {
+          agent: 'agent:too-deep',
+          permissions: ['read'],
+        }),
+      ).toThrow('maximum chain depth');
+    });
+
+    it('rejects too many permissions on issue', () => {
+      const issuer = createIssuer();
+      const perms = Array.from({ length: 51 }, (_, i) => `perm:${i}`);
+      expect(() =>
+        issuer.issue({
+          principal: 'user:alice@test.com',
+          agent: 'agent:bot',
+          permissions: perms,
+        }),
+      ).toThrow('Too many permissions');
+    });
+
+    it('rejects too many permissions on delegate', () => {
+      const issuer = createIssuer();
+      const perms = Array.from({ length: 50 }, (_, i) => `perm:${i}`);
+      const parent = issuer.issue({
+        principal: 'user:alice@test.com',
+        agent: 'agent:root',
+        permissions: perms,
+      });
+
+      const childPerms = Array.from({ length: 51 }, (_, i) => `perm:${i}`);
+      expect(() =>
+        issuer.delegate(parent, {
+          agent: 'agent:child',
+          permissions: childPerms,
+        }),
+      ).toThrow('Too many permissions');
+    });
+
     it('revoking child does not affect parent', () => {
       const issuer = createIssuer();
       const parent = issuer.issue({

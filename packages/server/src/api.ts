@@ -1,10 +1,19 @@
 import { Hono } from 'hono';
+import { cors } from 'hono/cors';
 import { PassportIssuer } from '@passport-agent/core';
 import { PassportDB } from './db.js';
 import { rateLimiter } from './rate-limit.js';
 
-export function createApi(issuer: PassportIssuer, db: PassportDB) {
+export interface ApiOptions {
+  cors?: boolean;
+}
+
+export function createApi(issuer: PassportIssuer, db: PassportDB, options: ApiOptions = {}) {
   const app = new Hono();
+
+  if (options.cors) {
+    app.use('*', cors());
+  }
 
   app.use('/v1/*', rateLimiter({ windowMs: 60_000, maxRequests: 100 }));
 
