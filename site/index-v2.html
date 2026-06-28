@@ -90,61 +90,11 @@
     .nav-links a:hover { color: var(--bone); }
 
     /* ── Hero ── */
-    .hero {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      padding: 64px 24px 20px;
-    }
-
-    .hero-label {
-      font-family: var(--mono);
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: 0.04em;
-      color: var(--zinc);
-      padding: 6px 14px;
-      border: 1px solid var(--rule);
-      border-radius: 100px;
-      margin-bottom: 12px;
-      opacity: 0; animation: fadeIn 0.6s ease 0.2s forwards;
-    }
-
     @keyframes fadeIn { to { opacity: 1; } }
-
-    .hero h1 {
-      font-family: var(--sans);
-      font-size: clamp(24px, 3.5vw, 38px);
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      line-height: 1.1;
-      max-width: 640px;
-      margin-bottom: 10px;
-      opacity: 0; animation: fadeUp 0.8s ease 0.3s forwards;
-    }
 
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(16px); }
       to { opacity: 1; transform: translateY(0); }
-    }
-
-    .hero h1 .hl {
-      background: linear-gradient(135deg, var(--seal) 0%, #f59e0b 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .hero-sub {
-      font-size: 17px;
-      color: var(--zinc);
-      max-width: 460px;
-      line-height: 1.6;
-      margin-bottom: 40px;
-      opacity: 0; animation: fadeUp 0.7s ease 0.45s forwards;
     }
 
     /* ── Terminal ── */
@@ -154,54 +104,184 @@
       opacity: 0; animation: fadeUp 0.8s ease 0.6s forwards;
     }
 
-    /* ── Flow Canvas ── */
-    .flow-canvas {
+    /* ── Scroll Flow Hero ── */
+    .scroll-flow {
+      position: relative;
+      height: 500vh;
+    }
+
+    .scroll-flow-sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .flow-track {
+      position: relative;
       width: 100%;
-      max-width: 720px;
-      margin: 20px auto 0;
-      opacity: 0; animation: fadeUp 0.8s ease 0.6s forwards;
+      max-width: 640px;
+      padding: 0 24px;
+    }
+
+    /* vertical gold line */
+    .flow-spine {
+      position: absolute;
+      left: 50%;
+      top: 60px;
+      width: 2px;
+      height: 0;
+      background: linear-gradient(180deg, #eab308 0%, rgba(234,179,8,0.15) 100%);
+      transform: translateX(-50%);
+      transition: height 0.5s ease;
+    }
+
+    /* each step */
+    .flow-step {
+      display: flex;
+      align-items: center;
+      gap: 40px;
+      padding: 28px 0;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
       position: relative;
     }
-
-    .flow-svg {
-      width: 100%;
-      height: auto;
-      overflow: visible;
-    }
-
-    .flow-line {
-      stroke-dasharray: 200;
-      stroke-dashoffset: 200;
-    }
-    .flow-line.animate {
-      transition: stroke-dashoffset 0.7s ease;
-      stroke-dashoffset: 0;
-    }
-
-    .flow-node {
-      opacity: 0;
-      transform: translateY(6px);
-      transition: opacity 0.4s ease, transform 0.4s ease;
-    }
-    .flow-node.show {
+    .flow-step.active {
       opacity: 1;
       transform: translateY(0);
     }
 
-    .flow-dot {
-      opacity: 0;
-      r: 3;
+    /* dot on the spine */
+    .flow-step::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 10px;
+      height: 10px;
+      background: var(--void);
+      border: 2px solid #eab308;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      transition: background 0.3s, box-shadow 0.3s;
     }
-    .flow-dot.show {
-      opacity: 1;
+    .flow-step.active::before {
+      background: #eab308;
+      box-shadow: 0 0 12px rgba(234,179,8,0.4);
     }
 
-    @keyframes pulse {
-      0%, 100% { r: 3; opacity: 1; }
-      50% { r: 5; opacity: 0.6; }
+    .flow-step-node {
+      flex: 1;
+      display: flex;
+      justify-content: flex-end;
     }
-    .flow-dot.pulse {
-      animation: pulse 1.5s ease infinite;
+    .flow-step-caption {
+      flex: 1;
+    }
+
+    /* alternate: even steps flip */
+    .flow-step:nth-child(even) {
+      flex-direction: row-reverse;
+    }
+    .flow-step:nth-child(even) .flow-step-node {
+      justify-content: flex-start;
+    }
+    .flow-step:nth-child(even) .flow-step-caption {
+      text-align: right;
+    }
+
+    /* node cards */
+    .fn-card {
+      padding: 14px 20px;
+      border-radius: 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.6;
+      min-width: 180px;
+      max-width: 240px;
+    }
+    .fn-card.human {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .fn-card.passport {
+      background: rgba(234,179,8,0.04);
+      border: 1px solid rgba(234,179,8,0.25);
+    }
+    .fn-card.checkpoint {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .fn-card.result-ok {
+      background: rgba(34,197,94,0.06);
+      border: 1px solid rgba(34,197,94,0.25);
+    }
+    .fn-card.result-no {
+      background: rgba(239,68,68,0.06);
+      border: 1px solid rgba(239,68,68,0.25);
+      margin-top: 8px;
+    }
+    .fn-card.delegate {
+      background: rgba(234,179,8,0.02);
+      border: 1px dashed rgba(234,179,8,0.15);
+    }
+
+    /* caption text */
+    .fc-title {
+      font-family: var(--sans);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--bone);
+      margin-bottom: 4px;
+    }
+    .fc-desc {
+      font-family: var(--sans);
+      font-size: 14px;
+      color: var(--zinc);
+      line-height: 1.5;
+    }
+
+    /* CTA at the end of flow */
+    .flow-cta {
+      text-align: center;
+      padding-top: 20px;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .flow-cta.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* scroll progress indicator */
+    .scroll-progress {
+      position: fixed;
+      top: 56px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 40;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .scroll-progress.visible { opacity: 1; }
+    .scroll-pip {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      transition: background 0.3s, transform 0.3s;
+    }
+    .scroll-pip.active {
+      background: #eab308;
+      transform: scale(1.4);
     }
 
     .terminal {
@@ -956,92 +1036,113 @@
       </ul>
     </nav>
 
-    <!-- ════ Hero ════ -->
-    <section class="hero">
-      <div class="hero-label">Open protocol for agent authorization</div>
-      <h1>Every agent gets a <span class="hl">passport</span> before it acts</h1>
+    <!-- ════ Scroll Flow Hero ════ -->
+    <div class="scroll-flow" id="scroll-flow">
+      <div class="scroll-flow-sticky">
+        <div class="flow-track">
 
-      <div class="flow-canvas" id="flow-canvas">
-        <svg class="flow-svg" viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+          <!-- Step 1: Human gives a task -->
+          <div class="flow-step" data-step="0">
+            <div class="flow-step-node">
+              <div class="fn-card human">
+                <div style="font-family:var(--sans);font-size:15px;font-weight:600;color:var(--bone);">"Book me a flight"</div>
+                <div style="color:var(--muted);font-size:11px;margin-top:4px;">→ booking-bot</div>
+              </div>
+            </div>
+            <div class="flow-step-caption">
+              <div class="fc-title">A human delegates a task</div>
+              <div class="fc-desc">An agent receives instructions. Today, it acts with full access. No boundaries.</div>
+            </div>
+          </div>
 
-          <!-- ─── Lines ─── -->
-          <path id="ln1" class="flow-line" d="M 130 45 L 175 45" stroke="#eab308" stroke-width="1.5" fill="none" stroke-opacity="0.4" />
-          <path id="ln2" class="flow-line" d="M 310 45 L 355 45" stroke="#eab308" stroke-width="1.5" fill="none" stroke-opacity="0.4" />
-          <path id="ln3" class="flow-line" d="M 460 35 L 530 20" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-opacity="0.5" />
-          <path id="ln4" class="flow-line" d="M 460 55 L 530 70" stroke="#ef4444" stroke-width="1.5" fill="none" stroke-opacity="0.5" />
-          <!-- delegation -->
-          <path id="ln5" class="flow-line" d="M 245 80 L 245 110" stroke="#eab308" stroke-width="1" fill="none" stroke-opacity="0.25" stroke-dasharray="4 3" />
-          <path id="ln6" class="flow-line" d="M 310 135 L 355 135" stroke="#eab308" stroke-width="1" fill="none" stroke-opacity="0.2" stroke-dasharray="4 3" />
+          <!-- Step 2: Passport issued -->
+          <div class="flow-step" data-step="1">
+            <div class="flow-step-node">
+              <div class="fn-card passport">
+                <div style="color:#eab308;font-weight:500;">⬡ passport issued</div>
+                <div style="color:#86efac;margin-top:6px;">scope: calendar:* email:send</div>
+                <div style="color:#fbbf24;">budget: $500 · ttl: 24h</div>
+              </div>
+            </div>
+            <div class="flow-step-caption">
+              <div class="fc-title">A passport is attached</div>
+              <div class="fc-desc">Scoped permissions, a spend limit, and an expiry. The agent can only do what the human approved.</div>
+            </div>
+          </div>
 
-          <!-- ─── Nodes ─── -->
+          <!-- Step 3: authorize() checkpoint -->
+          <div class="flow-step" data-step="2">
+            <div class="flow-step-node">
+              <div class="fn-card checkpoint">
+                <div style="color:var(--bone);font-weight:500;font-size:14px;">authorize()</div>
+                <div style="color:var(--muted);font-size:10px;margin-top:4px;">checked at every tool boundary</div>
+              </div>
+            </div>
+            <div class="flow-step-caption">
+              <div class="fc-title">Every action hits a checkpoint</div>
+              <div class="fc-desc">Before any tool call or API request, the passport is verified. Server-side. Unforgeable.</div>
+            </div>
+          </div>
 
-          <!-- Human -->
-          <g class="flow-node" data-step="0">
-            <rect x="15" y="25" width="115" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" />
-            <text x="72" y="50" text-anchor="middle" font-family="'Inter',sans-serif" font-size="13" fill="#fafaf9" font-weight="600">"Book a flight"</text>
-          </g>
+          <!-- Step 4: Allow / Deny -->
+          <div class="flow-step" data-step="3">
+            <div class="flow-step-node">
+              <div class="fn-card result-ok">
+                <span style="color:#22c55e;font-weight:600;">✓</span>
+                <span style="color:#86efac;"> calendar:write</span>
+              </div>
+              <div class="fn-card result-no">
+                <span style="color:#ef4444;font-weight:600;">✗</span>
+                <span style="color:#fca5a5;"> database:drop</span>
+              </div>
+            </div>
+            <div class="flow-step-caption">
+              <div class="fc-title">In scope? Allowed. Otherwise? Denied.</div>
+              <div class="fc-desc">No ambiguity. The passport defines the boundary. Out-of-scope actions are rejected instantly.</div>
+            </div>
+          </div>
 
-          <!-- Passport -->
-          <g class="flow-node" data-step="1">
-            <rect x="175" y="15" width="135" height="65" rx="8" fill="rgba(234,179,8,0.04)" stroke="rgba(234,179,8,0.25)" />
-            <text x="242" y="34" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="#eab308" font-weight="500">⬡ passport</text>
-            <text x="242" y="50" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" fill="#86efac">calendar:* email:send</text>
-            <text x="242" y="65" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" fill="#fbbf24">$500 · 24h</text>
-          </g>
+          <!-- Step 5: Delegation -->
+          <div class="flow-step" data-step="4">
+            <div class="flow-step-node">
+              <div class="fn-card delegate">
+                <div style="color:#ca8a04;font-weight:500;">↳ email-agent</div>
+                <div style="color:#86efac;font-size:10px;margin-top:4px;">email:send only · $50 · 1h</div>
+              </div>
+            </div>
+            <div class="flow-step-caption">
+              <div class="fc-title">Sub-agents get narrower passports</div>
+              <div class="fc-desc">Delegation only narrows. A child can never have more permissions than its parent. Revoke the parent — all children die instantly.</div>
+            </div>
+          </div>
 
-          <!-- authorize() -->
-          <g class="flow-node" data-step="2">
-            <rect x="355" y="22" width="105" height="46" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.15)" />
-            <text x="407" y="50" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" fill="#fafaf9" font-weight="500">authorize()</text>
-          </g>
+          <!-- Vertical spine line -->
+          <div class="flow-spine" id="flow-spine"></div>
 
-          <!-- Allowed -->
-          <g class="flow-node" data-step="3">
-            <rect x="530" y="4" width="155" height="30" rx="15" fill="rgba(34,197,94,0.08)" stroke="rgba(34,197,94,0.3)" />
-            <text x="607" y="24" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="#22c55e" font-weight="500">✓ calendar:write</text>
-          </g>
-
-          <!-- Denied -->
-          <g class="flow-node" data-step="3">
-            <rect x="530" y="56" width="155" height="30" rx="15" fill="rgba(239,68,68,0.08)" stroke="rgba(239,68,68,0.3)" />
-            <text x="607" y="76" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="#ef4444" font-weight="500">✗ database:drop</text>
-          </g>
-
-          <!-- Delegation row -->
-          <g class="flow-node" data-step="4">
-            <rect x="175" y="110" width="135" height="45" rx="6" fill="rgba(234,179,8,0.02)" stroke="rgba(234,179,8,0.12)" stroke-dasharray="4 3" />
-            <text x="242" y="128" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" fill="#ca8a04">↳ email-agent</text>
-            <text x="242" y="144" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8" fill="#86efac">email:send · $50 · 1h</text>
-          </g>
-
-          <g class="flow-node" data-step="5">
-            <rect x="355" y="118" width="135" height="35" rx="6" fill="rgba(234,179,8,0.01)" stroke="rgba(234,179,8,0.08)" stroke-dasharray="4 3" />
-            <text x="422" y="134" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8" fill="#a1a1aa">↳↳ notify-bot</text>
-            <text x="422" y="146" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="7" fill="#86efac">email:send (1) · $0</text>
-          </g>
-
-          <!-- "narrows" annotation -->
-          <text x="262" y="105" font-family="'JetBrains Mono',monospace" font-size="7" fill="#52525b" font-style="italic">permissions narrow ↓</text>
-
-          <!-- Animated dots -->
-          <circle id="dot1" class="flow-dot" cx="155" cy="45" r="3" fill="#eab308" />
-          <circle id="dot2" class="flow-dot" cx="340" cy="45" r="3" fill="#eab308" />
-          <circle id="dot3" class="flow-dot" cx="495" cy="25" r="3" fill="#22c55e" />
-          <circle id="dot4" class="flow-dot" cx="495" cy="65" r="3" fill="#ef4444" />
-
-        </svg>
+          <!-- CTA at end -->
+          <div class="flow-cta" id="flow-cta">
+            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+              <a href="https://github.com/priyansh-x/agent-passport" class="btn btn-primary" target="_blank" rel="noopener">View on GitHub</a>
+              <a href="#how" class="btn btn-ghost">How it works</a>
+            </div>
+            <div class="install-cmd" id="install-cmd" onclick="copyInstall()" style="margin-top:14px;">
+              <span class="dollar">$</span>
+              <span id="install-text">npm install @passport-agent/sdk</span>
+              <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            </div>
+          </div>
+        </div>
       </div>
+    </div>
 
-      <div class="hero-cta">
-        <a href="https://github.com/priyansh-x/agent-passport" class="btn btn-primary" target="_blank" rel="noopener">View on GitHub</a>
-        <a href="#how" class="btn btn-ghost">How it works</a>
-      </div>
-      <div class="install-cmd" id="install-cmd" onclick="copyInstall()">
-        <span class="dollar">$</span>
-        <span id="install-text">npm install @passport-agent/sdk</span>
-        <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-      </div>
-    </section>
+    <!-- Scroll progress pips -->
+    <div class="scroll-progress" id="scroll-pips">
+      <div class="scroll-pip" data-pip="0"></div>
+      <div class="scroll-pip" data-pip="1"></div>
+      <div class="scroll-pip" data-pip="2"></div>
+      <div class="scroll-pip" data-pip="3"></div>
+      <div class="scroll-pip" data-pip="4"></div>
+    </div>
 
     <!-- ════ Problem ════ -->
     <div class="section" id="problem">
@@ -1427,53 +1528,68 @@
       if (el) { const orig = el.textContent; el.textContent = 'copied!'; setTimeout(() => el.textContent = orig, 1500); }
     }
 
-    // ── Flow canvas animation ──
-    function animateFlow() {
-      const lines = ['ln1','ln2','ln3','ln4','ln5','ln6'];
-      const dots = ['dot1','dot2','dot3','dot4'];
-      const nodes = document.querySelectorAll('.flow-node');
-      const lineDelays = [0, 500, 1000, 1100, 1600, 2000];
-      const nodeDelays = [0, 200, 600, 1200, 1800, 2200];
+    // ── Scroll-driven flow animation ──
+    (function() {
+      const container = document.getElementById('scroll-flow');
+      const spine = document.getElementById('flow-spine');
+      const steps = document.querySelectorAll('.flow-step');
+      const cta = document.getElementById('flow-cta');
+      const pips = document.getElementById('scroll-pips');
+      const pipDots = document.querySelectorAll('.scroll-pip');
+      if (!container || !steps.length) return;
 
-      // Reset
-      lines.forEach(id => { const el = document.getElementById(id); if(el) el.classList.remove('animate'); });
-      dots.forEach(id => { const el = document.getElementById(id); if(el) { el.classList.remove('show','pulse'); }});
-      nodes.forEach(n => n.classList.remove('show'));
+      const totalSteps = steps.length;
 
-      // Animate nodes
-      nodes.forEach(n => {
-        const step = parseInt(n.dataset.step);
-        setTimeout(() => n.classList.add('show'), nodeDelays[step] || step * 400);
-      });
+      function onScroll() {
+        const rect = container.getBoundingClientRect();
+        const scrollHeight = container.offsetHeight - window.innerHeight;
+        const scrolled = -rect.top;
+        const progress = Math.max(0, Math.min(1, scrolled / scrollHeight));
 
-      // Animate lines
-      lines.forEach((id, i) => {
-        setTimeout(() => {
-          const el = document.getElementById(id);
-          if (el) el.classList.add('animate');
-        }, lineDelays[i]);
-      });
-
-      // Dots appear at connection points
-      setTimeout(() => { const d = document.getElementById('dot1'); if(d) d.classList.add('show','pulse'); }, 200);
-      setTimeout(() => { const d = document.getElementById('dot2'); if(d) d.classList.add('show','pulse'); }, 800);
-      setTimeout(() => { const d = document.getElementById('dot3'); if(d) d.classList.add('show','pulse'); }, 1900);
-      setTimeout(() => { const d = document.getElementById('dot4'); if(d) d.classList.add('show','pulse'); }, 1900);
-
-      // Loop
-      setTimeout(animateFlow, 6000);
-    }
-
-    const flowObs = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          setTimeout(animateFlow, 600);
-          flowObs.unobserve(e.target);
+        // Show/hide pips
+        if (progress > 0 && progress < 1) {
+          pips.classList.add('visible');
+        } else {
+          pips.classList.remove('visible');
         }
-      });
-    }, { threshold: 0.2 });
-    const flowCanvas = document.getElementById('flow-canvas');
-    if (flowCanvas) flowObs.observe(flowCanvas);
+
+        // Which step are we on
+        const currentStep = Math.floor(progress * totalSteps);
+
+        // Activate steps
+        steps.forEach((step, i) => {
+          if (i <= currentStep) {
+            step.classList.add('active');
+          } else {
+            step.classList.remove('active');
+          }
+        });
+
+        // Update pips
+        pipDots.forEach((pip, i) => {
+          if (i <= currentStep) {
+            pip.classList.add('active');
+          } else {
+            pip.classList.remove('active');
+          }
+        });
+
+        // Grow spine line
+        const spineProgress = Math.min(1, (currentStep + 1) / totalSteps);
+        const maxHeight = (totalSteps - 1) * 110 + 40;
+        spine.style.height = (spineProgress * maxHeight) + 'px';
+
+        // Show CTA at end
+        if (progress > 0.85) {
+          cta.classList.add('active');
+        } else {
+          cta.classList.remove('active');
+        }
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    })();
 
 
     // ── Stat counter animation ──
