@@ -1,62 +1,278 @@
-# Agent Passport
+<p align="center">
+  <img src="https://img.shields.io/badge/protocol-v0.1-blue?style=flat-square" alt="Protocol v0.1" />
+  <img src="https://img.shields.io/npm/v/@passport-agent/core?style=flat-square&color=black" alt="npm" />
+  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License" />
+  <img src="https://img.shields.io/badge/crypto-Ed25519-purple?style=flat-square" alt="Ed25519" />
+  <img src="https://img.shields.io/badge/tokens-Biscuit%20%2B%20JWT-orange?style=flat-square" alt="Biscuit + JWT" />
+</p>
 
-**The Stripe for agent authorization.**
+<h1 align="center">Agent Passport</h1>
 
-Give every AI agent a cryptographically verifiable passport before it acts on behalf of humans.
+<p align="center">
+  <strong>Cryptographic authorization for AI agents.</strong><br/>
+  Scoped permissions. Spend limits. Delegation chains. Instant revocation.<br/>
+  <em>The missing authorization layer between humans and autonomous agents.</em>
+</p>
+
+<br/>
+
+## The Problem
+
+AI agents are acting on behalf of humans with **zero guardrails**:
+
+- **97%** of deployed agents are over-permissioned
+- **53%** use static API keys copied from human credentials  
+- No standard way to scope *what* an agent can do, *how much* it can spend, or *when* to cut it off
+- Agent-to-agent delegation? Just vibes and trust
+
+IETF AIMS handles agent *identity*. Agent Passport handles agent *authorization*.
+
+## 10 Lines to Production
+
+```bash
+npm install @passport-agent/sdk
+```
 
 ```typescript
 import { AgentPassport } from '@passport-agent/sdk';
 
-// Human authorizes an agent with scoped permissions
-const passport = await AgentPassport.issue({
+const passport = AgentPassport.issue({
   principal: 'user:alice@company.com',
   agent: 'agent:booking-bot',
   permissions: ['calendar:read', 'calendar:write', 'email:send'],
   limits: { maxSpend: 500, currency: 'USD' },
-  expiresIn: '24h',
+  expiresIn: 24 * 60 * 60 * 1000,
 });
 
-// Agent presents passport before every action
-const result = await passport.authorize('calendar:write', {
-  action: 'book_meeting',
-  metadata: { attendees: 3, cost: 0 },
-});
-
-// Sub-agent gets narrower passport (can never escalate)
-const subPassport = await passport.delegate('agent:email-drafter', {
-  permissions: ['email:send'], // subset only
-  limits: { maxSpend: 0 },
-});
+passport.authorize('calendar:write');       // ok
+passport.authorize('database:drop');        // throws PassportDeniedError
 ```
 
-## The Problem
+## How It Works
 
-- 97% of deployed agents are over-permissioned
-- 53% use static API keys shared from human credentials
-- No standard way to prove what an agent can do, for whom, within what limits
-- IETF AIMS covers authentication but authorization is still "TODO"
+```
+Human                    Agent Passport              Agent
+  |                          |                         |
+  |-- "Book me a flight" --> |                         |
+  |                          |-- issue passport -----> |
+  |                          |   [fly:book, $500 max]  |
+  |                          |                         |
+  |                          |   authorize("fly:book") |
+  |                          | <---------------------- |
+  |                          |-- allowed ------------> |
+  |                          |                         |
+  |                          |   authorize("db:drop")  |
+  |                          | <---------------------- |
+  |                          |-- DENIED -------------> |
+  |                          |                         |
+  |-- "Stop everything" --> |                          |
+  |                          |-- revoke (cascade) ---> X
+```
 
-## What Agent Passport Does
+Every passport is:
 
-| Feature | How |
+- **Signed** with Ed25519 (tamper-proof)
+- **Scoped** to specific actions (permission allow-list)
+- **Budget-capped** (spend tracking per passport)
+- **Time-bound** (automatic expiration)
+- **Chain-aware** (delegation trees with cascade revocation)
+
+## Multi-Agent Delegation
+
+Agents can delegate to sub-agents, but privileges **only narrow, never escalate**:
+
+```typescript
+// Root agent has broad permissions
+const root = AgentPassport.issue({
+  principal: 'user:alice@company.com',
+  agent: 'agent:orchestrator',
+  permissions: ['calendar:*', 'email:*', 'payment:charge'],
+  limits: { maxSpend: 1000 },
+});
+
+// Sub-agent gets strictly fewer permissions
+const emailAgent = root.delegate({
+  agent: 'agent:email-drafter',
+  permissions: ['email:send'],      // calendar, payment stripped
+  limits: { maxSpend: 0 },          // no spending allowed
+});
+
+// This throws - can't escalate beyond parent
+root.delegate({
+  agent: 'agent:rogue',
+  permissions: ['admin:*'],          // not in parent's permissions
+});
+
+// Revoke root = entire chain dies
+root.revoke();  // orchestrator, email-drafter all revoked
+```
+
+## Biscuit Tokens (Datalog Policy Engine)
+
+For deep delegation chains where intermediate agents may be untrusted, Agent Passport supports [Biscuit tokens](https://www.biscuitsec.org/) with Datalog policy enforcement:
+
+```typescript
+import { BiscuitIssuer } from '@passport-agent/core';
+
+const issuer = new BiscuitIssuer();
+
+const token = issuer.issue({
+  id: 'passport-1',
+  sub: 'agent:bot',
+  principal: 'user:alice',
+  permissions: [{ action: 'read' }, { action: 'write' }],
+  // ... other fields
+});
+
+// Attenuate: add Datalog checks that restrict the token
+const restricted = issuer.attenuate(token.token, {
+  // ... narrower permissions
+  permissions: [{ action: 'read' }],  // write stripped via Datalog check
+});
+
+// Datalog policy prevents escalation cryptographically
+issuer.authorize(restricted.token, 'write');  // { allowed: false }
+```
+
+## Framework Integrations
+
+### MCP (Model Context Protocol)
+
+```typescript
+import { PassportToolGuard } from '@passport-agent/mcp';
+
+const guard = new PassportToolGuard(server, {
+  permissions: {
+    'read_file': ['files:read'],
+    'send_email': ['email:send'],
+  },
+});
+// Tools are now passport-protected
+```
+
+### Express / Fastify / Next.js
+
+```typescript
+import { expressPassport } from '@passport-agent/middleware';
+
+app.use('/api', expressPassport({
+  issuer,
+  // Auto-extracts action from method + path: GET /api/users → api:users:get
+}));
+```
+
+### LangChain
+
+```typescript
+import { withPassport } from '@passport-agent/langchain';
+
+const protectedTool = withPassport(myTool, passport, 'tool:execute');
+```
+
+### CrewAI
+
+```typescript
+import { PassportAgent } from '@passport-agent/crewai';
+
+const agent = new PassportAgent(baseAgent, passport);
+// All tool calls now require passport authorization
+```
+
+## Passport Authority Server
+
+Run a local authority with SQLite persistence, REST API, and web dashboard:
+
+```bash
+npx @passport-agent/server
+```
+
+```
+  ╔══════════════════════════════════════════╗
+  ║   Agent Passport Authority Server        ║
+  ╠══════════════════════════════════════════╣
+  ║  http://localhost:3100                   ║
+  ╚══════════════════════════════════════════╝
+```
+
+**REST API:**
+
+```bash
+# Issue a passport
+curl -X POST localhost:3100/v1/passports \
+  -H 'Content-Type: application/json' \
+  -d '{"principal":"user:alice","agent":"agent:bot","permissions":["read","write"],"limits":{"maxSpend":100}}'
+
+# Authorize an action
+curl -X POST localhost:3100/v1/passports/{id}/authorize \
+  -d '{"action":"read"}'
+
+# Token introspection (RFC 7662-style)
+curl -X POST localhost:3100/v1/passports/{id}/introspect
+
+# Cascade revocation
+curl -X POST localhost:3100/v1/passports/{id}/revoke
+
+# Full audit trail
+curl localhost:3100/v1/passports/{id}/audit
+```
+
+**Features:** Persistent SQLite storage, cascade revocation, spend tracking, delegation trees, audit logs, token introspection.
+
+## Architecture
+
+```
+┌──────────────────────────────────────────────────┐
+│                  Your Application                 │
+├──────────────┬───────────────┬────────────────────┤
+│   LangChain  │    CrewAI     │      A2A           │
+│   Wrapper    │   Decorator   │   Agent Card       │
+├──────────────┴───────────────┴────────────────────┤
+│              @passport-agent/sdk                   │
+│         AgentPassport.issue / authorize / delegate  │
+├───────────────────────────────────────────────────┤
+│              @passport-agent/core                  │
+│   Ed25519 Signing  │  Policy Engine  │  Biscuit    │
+├───────────────────────────────────────────────────┤
+│           @passport-agent/server                   │
+│   REST API  │  SQLite  │  Audit Log  │  Dashboard  │
+└───────────────────────────────────────────────────┘
+```
+
+## Packages
+
+| Package | Description |
 |---|---|
-| Human-authorized delegation | Passport tied to a specific principal |
-| Scoped permissions | Allow-list of actions, spend limits, time windows |
-| Monotonic narrowing | Sub-agents can only get fewer permissions |
-| Instant revocation | Cascade down the entire delegation chain |
-| Full audit trail | Every action logged with passport ID + chain |
+| [`@passport-agent/core`](https://www.npmjs.com/package/@passport-agent/core) | Token creation, validation, policy engine, Biscuit support |
+| [`@passport-agent/sdk`](https://www.npmjs.com/package/@passport-agent/sdk) | Developer-facing API — the main entry point |
+| [`@passport-agent/server`](https://www.npmjs.com/package/@passport-agent/server) | Authority server with REST API, SQLite, dashboard |
+| [`@passport-agent/mcp`](https://www.npmjs.com/package/@passport-agent/mcp) | MCP middleware for tool call authorization |
+| [`@passport-agent/middleware`](https://www.npmjs.com/package/@passport-agent/middleware) | Express, Fastify, Next.js middleware |
+| [`@passport-agent/langchain`](https://www.npmjs.com/package/@passport-agent/langchain) | LangChain tool wrapper |
+| [`@passport-agent/crewai`](https://www.npmjs.com/package/@passport-agent/crewai) | CrewAI agent decorator |
+| [`@passport-agent/a2a`](https://www.npmjs.com/package/@passport-agent/a2a) | A2A Agent Card extensions |
 
-## What It Is NOT
+## Security Model
 
-- Not an identity protocol (SPIFFE/WIMSE handle that)
-- Not an enterprise IAM tool (Okta/Auth0 handle that)
-- Not a blockchain thing
+| Property | Guarantee |
+|---|---|
+| **Tamper-proof** | Ed25519 signatures verified on every `authorize()` call |
+| **No escalation** | Delegation only narrows permissions (enforced by policy engine + Datalog) |
+| **Cascade revocation** | Revoking a parent kills the entire delegation subtree |
+| **Replay protection** | 128-bit nonce per passport |
+| **Budget enforcement** | Server-side spend tracking (clients can't lie about spending) |
+| **Time-bound** | Automatic expiration, child can't outlive parent |
 
-Agent Passport fills the gap between "who is this agent?" (identity) and "should this agent do this specific thing right now?" (pre-action policy).
+## What Agent Passport Is NOT
 
-## Status
+- **Not an identity protocol** — SPIFFE/WIMSE handle "who is this agent?"
+- **Not an IAM tool** — Okta/Auth0 handle enterprise identity management
+- **Not a blockchain** — just cryptography where it matters
 
-Early development. Protocol spec and core SDK in progress.
+Agent Passport answers one question: **"Is this agent allowed to do this specific thing, right now, within these limits?"**
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). We use an RFC process for protocol changes.
 
 ## License
 
