@@ -615,12 +615,101 @@
       padding: 28px 22px;
       background: var(--void);
       transition: background 0.2s;
+      position: relative;
+      cursor: default;
     }
     .int-card:hover { background: rgba(255,255,255,0.02); }
 
     .int-name { font-size: 16px; font-weight: 600; margin-bottom: 6px; color: var(--seal); }
     .int-desc { font-size: 13px; color: var(--zinc); line-height: 1.5; margin-bottom: 12px; }
     .int-code { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+    .int-hover-hint { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 8px; opacity: 0.5; }
+
+    .int-tooltip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 340px;
+      padding: 16px 18px;
+      background: #18181b;
+      border: 1px solid rgba(234,179,8,0.2);
+      border-radius: 8px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+      z-index: 20;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--bone);
+      pointer-events: none;
+    }
+    .int-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: rgba(234,179,8,0.2);
+    }
+    .int-card:hover .int-tooltip { display: block; }
+
+    .tt-kw { color: #c4b5fd; }
+    .tt-fn { color: #93c5fd; }
+    .tt-str { color: #86efac; }
+    .tt-cmt { color: var(--muted); }
+
+    /* ── FAQ ── */
+    .faq-list { margin-top: 40px; }
+
+    .faq-item {
+      border-bottom: 1px solid var(--rule);
+      padding: 24px 0;
+    }
+    .faq-item:first-child { border-top: 1px solid var(--rule); }
+
+    .faq-q {
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      user-select: none;
+      transition: color 0.15s;
+    }
+    .faq-q:hover { color: var(--seal); }
+
+    .faq-arrow {
+      flex-shrink: 0;
+      font-size: 14px;
+      color: var(--muted);
+      transition: transform 0.2s;
+    }
+    .faq-item.open .faq-arrow { transform: rotate(45deg); color: var(--seal); }
+
+    .faq-a {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+      font-size: 15px;
+      color: var(--zinc);
+      line-height: 1.7;
+    }
+    .faq-item.open .faq-a {
+      max-height: 600px;
+      padding-top: 14px;
+    }
+    .faq-a code {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--seal);
+      background: rgba(234,179,8,0.08);
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
 
     /* ── Security ── */
     .sec-table {
@@ -844,7 +933,6 @@
       <div class="hero-cta">
         <a href="https://github.com/priyansh-x/agent-passport" class="btn btn-primary" target="_blank" rel="noopener">View on GitHub</a>
         <a href="#how" class="btn btn-ghost">How it works</a>
-        <a href="/explain.html" class="btn btn-ghost" style="border-color: rgba(234,179,8,0.3); color: var(--seal);">Explain it like I'm 5 →</a>
       </div>
       <div class="install-cmd" id="install-cmd" onclick="copyInstall()">
         <span class="dollar">$</span>
@@ -972,41 +1060,57 @@
             <div class="int-name">MCP</div>
             <div class="int-desc">Passport-protect every tool call in your MCP server.</div>
             <div class="int-code">@passport-agent/mcp</div>
+            <div class="int-hover-hint">hover for example</div>
+            <div class="int-tooltip"><span class="tt-kw">const</span> guard = <span class="tt-kw">new</span> PassportToolGuard({ issuer })<br><br><span class="tt-cmt">// guards tool execution</span><br>guard.<span class="tt-fn">guard</span>(passport, <span class="tt-str">"send_email"</span>)<br><span class="tt-cmt">// → ✓ allowed or ✗ denied</span></div>
           </div>
           <div class="int-card">
             <div class="int-name">Express</div>
             <div class="int-desc">Middleware that maps routes to permissions automatically.</div>
             <div class="int-code">@passport-agent/middleware</div>
+            <div class="int-hover-hint">hover for example</div>
+            <div class="int-tooltip">app.<span class="tt-fn">use</span>(<span class="tt-fn">createPassportMiddleware</span>({ issuer }))<br><br><span class="tt-cmt">// POST /api/calendar → "api:calendar:post"</span><br><span class="tt-cmt">// passport checked automatically</span><br><span class="tt-cmt">// 401 if missing, 403 if denied</span></div>
           </div>
           <div class="int-card">
             <div class="int-name">LangChain</div>
             <div class="int-desc">Wrap any tool with passport authorization in one line.</div>
             <div class="int-code">@passport-agent/langchain</div>
+            <div class="int-hover-hint">hover for example</div>
+            <div class="int-tooltip"><span class="tt-kw">const</span> safe = <span class="tt-fn">withPassport</span>(emailTool, passport, {<br>&nbsp;&nbsp;permission: <span class="tt-str">"email:send"</span>,<br>&nbsp;&nbsp;spend: <span class="tt-str">0.50</span>&nbsp;&nbsp;<span class="tt-cmt">// costs 50¢ per call</span><br>})<br><span class="tt-cmt">// tool now checks passport before running</span></div>
           </div>
           <div class="int-card">
             <div class="int-name">CrewAI</div>
             <div class="int-desc">Decorator that guards all tool calls on an agent.</div>
             <div class="int-code">@passport-agent/crewai</div>
+            <div class="int-hover-hint">hover for example</div>
+            <div class="int-tooltip"><span class="tt-kw">const</span> agent = <span class="tt-kw">new</span> <span class="tt-fn">PassportAgent</span>(passport)<br><br>agent.<span class="tt-fn">execute</span>({<br>&nbsp;&nbsp;task: <span class="tt-str">"draft outreach"</span>,<br>&nbsp;&nbsp;requiredPermission: <span class="tt-str">"email:send"</span>,<br>})<br><span class="tt-cmt">// denied tasks fail gracefully</span></div>
           </div>
           <div class="int-card">
             <div class="int-name">Fastify</div>
             <div class="int-desc">Plugin with automatic action extraction from routes.</div>
             <div class="int-code">@passport-agent/middleware</div>
+            <div class="int-hover-hint">hover for example</div>
+            <div class="int-tooltip">fastify.<span class="tt-fn">register</span>(passportPlugin, { issuer })<br><br><span class="tt-cmt">// GET /users → "users:get"</span><br><span class="tt-cmt">// auto-extracts action from method + path</span><br><span class="tt-cmt">// attaches context to request</span></div>
           </div>
           <div class="int-card">
             <div class="int-name">Next.js</div>
             <div class="int-desc">API route middleware for server actions and edge.</div>
             <div class="int-code">@passport-agent/middleware</div>
+            <div class="int-hover-hint">hover for example</div>
+            <div class="int-tooltip"><span class="tt-kw">export</span> <span class="tt-kw">const</span> POST = <span class="tt-fn">withPassport</span>(handler, {<br>&nbsp;&nbsp;issuer,<br>&nbsp;&nbsp;action: <span class="tt-str">"api:users:create"</span>,<br>})<br><span class="tt-cmt">// works with App Router + Edge</span></div>
           </div>
           <div class="int-card">
             <div class="int-name">A2A</div>
             <div class="int-desc">Agent Card extensions for cross-agent authorization.</div>
             <div class="int-code">@passport-agent/a2a</div>
+            <div class="int-hover-hint">hover for example</div>
+            <div class="int-tooltip"><span class="tt-kw">const</span> card = {<br>&nbsp;&nbsp;passportRequirements: {<br>&nbsp;&nbsp;&nbsp;&nbsp;requiredPermissions: [<span class="tt-str">"search:*"</span>],<br>&nbsp;&nbsp;&nbsp;&nbsp;minSpendLimit: <span class="tt-str">100</span>,<br>&nbsp;&nbsp;}<br>}<br><span class="tt-cmt">// validates passport before agent-to-agent calls</span></div>
           </div>
           <div class="int-card">
             <div class="int-name">Authority Server</div>
             <div class="int-desc">Self-hosted REST API with SQLite, audit logs, dashboard.</div>
             <div class="int-code">@passport-agent/server</div>
+            <div class="int-hover-hint">hover for example</div>
+            <div class="int-tooltip">$ npx @passport-agent/server<br><br><span class="tt-cmt">// REST endpoints:</span><br>POST /v1/passports&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tt-cmt">// issue</span><br>POST /v1/passports/:id/authorize<br>POST /v1/passports/:id/revoke<br>GET&nbsp;&nbsp;/v1/passports/:id/audit</div>
           </div>
         </div>
       </div>
@@ -1100,6 +1204,71 @@
       </div>
     </div>
 
+    <!-- ════ FAQ ════ -->
+    <div class="section" id="faq">
+      <div class="section-inner">
+        <div class="section-tag reveal">FAQ</div>
+        <h2 class="section-title reveal">Common questions</h2>
+
+        <div class="faq-list reveal">
+          <div class="faq-item">
+            <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+              What stops an agent from removing the authorize() check from the code?
+              <span class="faq-arrow">+</span>
+            </div>
+            <div class="faq-a">
+              Agent Passport doesn't run inside the agent — it runs at the <strong>service boundary</strong>. The authorize() check lives in your server middleware, your MCP server, or your API gateway — code the agent never touches. The agent sends a request with its passport token in the header. Your server validates it. If the agent strips the passport or skips the header, your server returns 401 (unauthorized). It's the same pattern as OAuth: you don't trust the client to check its own permissions — the server enforces them. The agent can't "go into the code" because the enforcement code runs on infrastructure the agent doesn't control.
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+              How is this different from OAuth or API keys?
+              <span class="faq-arrow">+</span>
+            </div>
+            <div class="faq-a">
+              OAuth tells you <strong>who</strong> someone is. API keys prove <strong>identity</strong>. Neither tells you what the agent is allowed to do right now, how much it can spend, or when to cut it off. Agent Passport is the <strong>authorization</strong> layer — it sits on top of identity and adds scoped permissions, budget caps, time bounds, delegation chains, and cascade revocation. Think: OAuth says "this is booking-bot." Passport says "booking-bot can read calendars and spend up to $500 until midnight."
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+              What happens if an agent tries to escalate its own permissions?
+              <span class="faq-arrow">+</span>
+            </div>
+            <div class="faq-a">
+              It can't. The passport is signed with Ed25519 — changing any field (permissions, budget, expiry) breaks the cryptographic signature. The verification step catches it instantly. For delegation chains using Biscuit tokens, restrictions are appended cryptographically — you can only add constraints, never remove them. This is enforced at the protocol level, not application level.
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+              Can I use this without self-hosting?
+              <span class="faq-arrow">+</span>
+            </div>
+            <div class="faq-a">
+              Yes. The SDK works entirely locally for development — no server needed. <code>AgentPassport.issue()</code> and <code>passport.authorize()</code> run in-process. For production with persistent audit trails, spend tracking across restarts, and multi-service verification, you run the authority server (<code>npx @passport-agent/server</code>) — self-hosted on your infra. Hosted cloud authority is on the roadmap.
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+              What frameworks does it work with?
+              <span class="faq-arrow">+</span>
+            </div>
+            <div class="faq-a">
+              MCP (Model Context Protocol), Express, Fastify, Next.js, LangChain, CrewAI, and A2A (Agent-to-Agent protocol). Each has a dedicated package with framework-native bindings — middleware for HTTP frameworks, tool wrappers for agent frameworks, and Agent Card extensions for A2A. Hover over the integration cards above to see code examples.
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+              Is this open source? What's the license?
+              <span class="faq-arrow">+</span>
+            </div>
+            <div class="faq-a">
+              Fully open source under the MIT license. The protocol spec, all 8 packages, examples, and docs are on GitHub. We use an open RFC process for protocol changes — anyone can propose modifications.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ════ CTA ════ -->
     <div class="cta">
       <div class="section-inner">
@@ -1125,6 +1294,7 @@
           <li><a href="https://github.com/priyansh-x/agent-passport" target="_blank" rel="noopener">GitHub</a></li>
           <li><a href="https://www.npmjs.com/org/passport-agent" target="_blank" rel="noopener">npm</a></li>
           <li><a href="https://github.com/priyansh-x/agent-passport/blob/main/docs/protocol-spec.md" target="_blank" rel="noopener">Spec</a></li>
+          <li><a href="/explain.html" style="color: var(--seal);">Explain it like I'm 5</a></li>
         </ul>
       </div>
     </footer>
