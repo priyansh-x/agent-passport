@@ -833,6 +833,63 @@
     }
     .cta-links a:hover { color: var(--bone); }
 
+    /* ── Audit Viz ── */
+    .audit-viz {
+      margin-top: 48px;
+      border: 1px solid var(--rule);
+      border-radius: 10px;
+      overflow: hidden;
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+
+    .audit-header {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 12px 20px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .audit-header-cell {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .audit-row {
+      display: flex;
+      align-items: center;
+      padding: 10px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: background 0.15s;
+    }
+
+    .audit-row:last-child { border-bottom: none; }
+    .audit-row:hover { background: rgba(255,255,255,0.02); }
+
+    .audit-status { width: 60px; font-weight: 600; font-size: 14px; }
+    .audit-allow { color: var(--allow); }
+    .audit-deny { color: var(--deny); }
+    .audit-action { flex: 1; color: var(--bone); }
+    .audit-agent { width: 140px; color: var(--zinc); }
+    .audit-time { width: 130px; color: var(--muted); font-size: 12px; }
+    .audit-reason { flex: 1; color: var(--muted); font-size: 12px; }
+
+    .audit-stats {
+      display: flex;
+      justify-content: center;
+      gap: 60px;
+      margin-top: 48px;
+    }
+
+    .audit-stat { text-align: center; }
+    .audit-stat-num { font-family: var(--sans); font-size: 36px; font-weight: 700; }
+    .audit-stat-label { font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 6px; }
+
     /* ── Footer ── */
     footer {
       padding: 28px 0;
@@ -870,6 +927,14 @@
       .try-section { padding: 0 16px 16px; }
       .flow { flex-direction: column; }
       .flow-arrow { transform: rotate(90deg); }
+      .audit-header { display: none; }
+      .audit-row { flex-wrap: wrap; gap: 4px 12px; padding: 12px 16px; }
+      .audit-status { width: 24px; }
+      .audit-action { flex: none; width: auto; }
+      .audit-agent { width: auto; }
+      .audit-time { width: auto; }
+      .audit-reason { flex: none; width: 100%; padding-left: 36px; }
+      .audit-stats { gap: 32px; flex-wrap: wrap; }
     }
 
     @media (max-width: 480px) {
@@ -900,6 +965,7 @@
         <li><a href="#problem">Problem</a></li>
         <li><a href="#how">How it works</a></li>
         <li><a href="#integrations">Integrations</a></li>
+        <li><a href="#audit">Audit</a></li>
         <li><a href="#security">Security</a></li>
         <li><a href="https://github.com/priyansh-x/agent-passport" target="_blank" rel="noopener">GitHub</a></li>
       </ul>
@@ -1157,21 +1223,88 @@
       </div>
     </div>
 
-    <!-- ════ Agent Tracking ════ -->
-    <div class="section" id="tracking">
+    <!-- ════ Audit Trail ════ -->
+    <div class="section" id="audit">
       <div class="section-inner">
-        <div class="section-tag reveal">Agent tracking</div>
+        <div class="section-tag reveal">Audit trail</div>
         <h2 class="section-title reveal">Know exactly what your agents did</h2>
-        <p class="section-desc reveal">Every authorize() call is logged — allowed or denied. Query by passport ID to see the full history of any agent. Persisted in SQLite on the authority server, survives restarts.</p>
+        <p class="section-desc reveal">Every authorize() call is logged — allowed or denied. Persisted in SQLite, queryable by passport ID. Compliance-ready out of the box.</p>
 
-        <div class="compare reveal" style="grid-template-columns:1fr;">
-          <div class="compare-side" style="border-radius:8px;">
-            <div class="compare-label" style="color:var(--seal);">Audit trail per agent</div>
-            <div class="compare-item"><span class="compare-icon" style="color:var(--seal)">→</span> <strong>timestamp</strong> — when the action was attempted</div>
-            <div class="compare-item"><span class="compare-icon" style="color:var(--seal)">→</span> <strong>passport ID</strong> — which agent tried it</div>
-            <div class="compare-item"><span class="compare-icon" style="color:var(--seal)">→</span> <strong>action</strong> — what they tried to do (e.g. calendar:write)</div>
-            <div class="compare-item"><span class="compare-icon" style="color:var(--seal)">→</span> <strong>result</strong> — allowed or denied</div>
-            <div class="compare-item"><span class="compare-icon" style="color:var(--seal)">→</span> <strong>reason</strong> — why it was denied (e.g. "exceeds $500 budget")</div>
+        <div class="audit-viz reveal">
+          <div class="audit-header">
+            <span class="audit-header-cell" style="width:60px">Status</span>
+            <span class="audit-header-cell" style="flex:1">Action</span>
+            <span class="audit-header-cell" style="width:140px">Agent</span>
+            <span class="audit-header-cell" style="width:130px">Time</span>
+            <span class="audit-header-cell" style="flex:1">Reason</span>
+          </div>
+          <div class="audit-row">
+            <span class="audit-status audit-allow">✓</span>
+            <span class="audit-action">calendar:read</span>
+            <span class="audit-agent">booking-bot</span>
+            <span class="audit-time">14:23:01</span>
+            <span class="audit-reason">—</span>
+          </div>
+          <div class="audit-row">
+            <span class="audit-status audit-allow">✓</span>
+            <span class="audit-action">calendar:write</span>
+            <span class="audit-agent">booking-bot</span>
+            <span class="audit-time">14:23:04</span>
+            <span class="audit-reason">—</span>
+          </div>
+          <div class="audit-row">
+            <span class="audit-status audit-deny">✗</span>
+            <span class="audit-action">payment:charge</span>
+            <span class="audit-agent">booking-bot</span>
+            <span class="audit-time">14:23:08</span>
+            <span class="audit-reason">exceeds $500 budget</span>
+          </div>
+          <div class="audit-row">
+            <span class="audit-status audit-allow">✓</span>
+            <span class="audit-action">email:send</span>
+            <span class="audit-agent">email-drafter</span>
+            <span class="audit-time">14:23:12</span>
+            <span class="audit-reason">—</span>
+          </div>
+          <div class="audit-row">
+            <span class="audit-status audit-deny">✗</span>
+            <span class="audit-action">email:send</span>
+            <span class="audit-agent">email-drafter</span>
+            <span class="audit-time">14:23:15</span>
+            <span class="audit-reason">rate limit: 5/hour</span>
+          </div>
+          <div class="audit-row">
+            <span class="audit-status audit-deny">✗</span>
+            <span class="audit-action">database:drop</span>
+            <span class="audit-agent">booking-bot</span>
+            <span class="audit-time">14:23:19</span>
+            <span class="audit-reason">permission not granted</span>
+          </div>
+          <div class="audit-row">
+            <span class="audit-status audit-allow">✓</span>
+            <span class="audit-action">files:read</span>
+            <span class="audit-agent">research-agent</span>
+            <span class="audit-time">14:23:22</span>
+            <span class="audit-reason">—</span>
+          </div>
+        </div>
+
+        <div class="audit-stats reveal">
+          <div class="audit-stat">
+            <div class="audit-stat-num" style="color:var(--allow)">4</div>
+            <div class="audit-stat-label">Allowed</div>
+          </div>
+          <div class="audit-stat">
+            <div class="audit-stat-num" style="color:var(--deny)">3</div>
+            <div class="audit-stat-label">Denied</div>
+          </div>
+          <div class="audit-stat">
+            <div class="audit-stat-num" style="color:var(--seal)">3</div>
+            <div class="audit-stat-label">Agents</div>
+          </div>
+          <div class="audit-stat">
+            <div class="audit-stat-num" style="color:var(--zinc)">∞</div>
+            <div class="audit-stat-label">Retained</div>
           </div>
         </div>
       </div>
