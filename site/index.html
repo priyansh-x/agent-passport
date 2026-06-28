@@ -73,7 +73,7 @@
       z-index: 0;
       pointer-events: none;
       opacity: 0;
-      transition: opacity 1s ease 2s;
+      transition: opacity 0.8s ease 1.2s;
     }
     #dotCanvas.visible { opacity: 1; }
 
@@ -84,10 +84,10 @@
       animation: heroFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    .hero-fade-1 { animation-delay: 2.2s; }
-    .hero-fade-2 { animation-delay: 2.4s; }
-    .hero-fade-3 { animation-delay: 2.6s; }
-    .hero-fade-4 { animation-delay: 2.8s; }
+    .hero-fade-1 { animation-delay: 1.4s; }
+    .hero-fade-2 { animation-delay: 1.55s; }
+    .hero-fade-3 { animation-delay: 1.7s; }
+    .hero-fade-4 { animation-delay: 1.85s; }
 
     @keyframes heroFadeIn {
       to { opacity: 1; transform: translateY(0); }
@@ -1018,7 +1018,7 @@
       <li><a href="#audit">Audit trail</a></li>
       <li><a href="#integrations">Integrations</a></li>
       <li><a href="https://github.com/priyansh-x/agent-passport" target="_blank" rel="noopener">GitHub</a></li>
-      <li><a href="https://github.com/priyansh-x/agent-passport/blob/main/docs/protocol-spec.md" target="_blank" rel="noopener" class="nav-cta">Docs</a></li>
+      <li><a href="/docs" class="nav-cta">Docs</a></li>
     </ul>
   </nav>
 
@@ -1419,8 +1419,8 @@
       let angle = 0;
       let phase = 'globe'; // 'globe' → 'scatter' → 'done'
       let scatterStart = 0;
-      const SCATTER_DUR = 1800;
-      const GLOBE_DUR = 1500;
+      const SCATTER_DUR = 1000;
+      const GLOBE_DUR = 1000;
       const startTime = performance.now();
 
       // Build globe points (sphere surface)

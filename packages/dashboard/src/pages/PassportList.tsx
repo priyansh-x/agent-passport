@@ -79,7 +79,6 @@ export function PassportList() {
     )
   }
 
-  const parents = passports.filter(({ passport }) => !passport.parentId)
   const children = passports.filter(({ passport }) => passport.parentId)
 
   function getChildren(parentId: string): PassportWithStatus[] {

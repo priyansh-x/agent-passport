@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Docs — Agent Passport</title>
+  <meta name="description" content="Documentation for Agent Passport — the authorization layer for AI agents." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --white: #FFFFFF;
+      --black: #0A0A0A;
+      --gray-900: #171717;
+      --gray-700: #404040;
+      --gray-500: #737373;
+      --gray-400: #A3A3A3;
+      --gray-300: #D4D4D4;
+      --gray-200: #E5E5E5;
+      --gray-100: #F5F5F5;
+      --gray-50: #FAFAFA;
+      --teal: #0D9488;
+      --teal-dark: #0F766E;
+      --teal-light: #F0FDFA;
+      --teal-mid: #CCFBF1;
+      --font: 'Manrope', system-ui, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+      --sidebar-w: 260px;
+      --nav-h: 56px;
+    }
+
+    html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+
+    body {
+      font-family: var(--font);
+      background: var(--white);
+      color: var(--black);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.7;
+    }
+
+    /* ── Nav ── */
+    .nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--nav-h);
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--gray-200);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--black);
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      list-style: none;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--gray-500);
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--black); }
+
+    /* ── Search (Cmd+K) ── */
+    .search-trigger {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      background: var(--gray-50);
+      color: var(--gray-400);
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .search-trigger:hover { border-color: var(--gray-300); }
+    .search-trigger kbd {
+      font-family: var(--font);
+      font-size: 11px;
+      padding: 1px 5px;
+      border: 1px solid var(--gray-200);
+      border-radius: 4px;
+      background: var(--white);
+      color: var(--gray-400);
+    }
+
+    /* ── Search Modal ── */
+    .search-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(0,0,0,0.4);
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 120px;
+    }
+    .search-modal.open { display: flex; }
+    .search-box {
+      background: var(--white);
+      border-radius: 12px;
+      width: 520px;
+      max-width: 90vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      overflow: hidden;
+    }
+    .search-input {
+      width: 100%;
+      padding: 16px 20px;
+      border: none;
+      outline: none;
+      font-family: var(--font);
+      font-size: 16px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .search-results {
+      max-height: 320px;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .search-result {
+      display: block;
+      padding: 10px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--black);
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .search-result:hover, .search-result.active { background: var(--gray-50); }
+    .search-result small { display: block; color: var(--gray-400); font-size: 12px; margin-top: 2px; }
+    .search-empty { padding: 24px; text-align: center; color: var(--gray-400); font-size: 14px; }
+
+    /* ── Layout ── */
+    .layout {
+      display: flex;
+      margin-top: var(--nav-h);
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      position: fixed;
+      top: var(--nav-h);
+      left: 0;
+      bottom: 0;
+      width: var(--sidebar-w);
+      padding: 24px 20px;
+      overflow-y: auto;
+      border-right: 1px solid var(--gray-100);
+      background: var(--white);
+      z-index: 50;
+    }
+    .sidebar-group { margin-bottom: 28px; }
+    .sidebar-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--gray-400);
+      margin-bottom: 8px;
+    }
+    .sidebar-link {
+      display: block;
+      padding: 5px 12px;
+      font-size: 14px;
+      color: var(--gray-500);
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.15s;
+      border-left: 2px solid transparent;
+      margin-left: -2px;
+    }
+    .sidebar-link:hover { color: var(--black); background: var(--gray-50); }
+    .sidebar-link.active {
+      color: var(--teal);
+      background: var(--teal-light);
+      border-left-color: var(--teal);
+      font-weight: 600;
+    }
+
+    /* ── Main Content ── */
+    .content {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      max-width: 780px;
+      padding: 48px 56px 120px;
+    }
+
+    .content h1 {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+    .content h2 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-top: 56px;
+      margin-bottom: 16px;
+      padding-top: 24px;
+      border-top: 1px solid var(--gray-100);
+    }
+    .content h2:first-of-type { border-top: none; margin-top: 40px; }
+    .content h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-top: 36px;
+      margin-bottom: 12px;
+    }
+    .content p {
+      font-size: 15px;
+      color: var(--gray-700);
+      margin-bottom: 16px;
+    }
+    .content ul, .content ol {
+      padding-left: 24px;
+      margin-bottom: 16px;
+    }
+    .content li {
+      font-size: 15px;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+    .content a {
+      color: var(--teal);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .content a:hover { text-decoration: underline; }
+    .content strong { font-weight: 600; color: var(--black); }
+    .content > .lead {
+      font-size: 18px;
+      color: var(--gray-500);
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+
+    /* ── Code Blocks ── */
+    .code-block {
+      position: relative;
+      background: var(--gray-900);
+      border-radius: 10px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .code-lang {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--gray-400);
+    }
+    .code-copy {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      padding: 4px 10px;
+      color: var(--gray-400);
+      font-family: var(--font);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .code-copy:hover { background: rgba(255,255,255,0.08); color: var(--white); }
+    .code-copy.copied { color: var(--teal); border-color: var(--teal); }
+    .code-body {
+      padding: 16px 20px;
+      overflow-x: auto;
+    }
+    .code-body pre {
+      margin: 0;
+      font-family: var(--mono);
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: #E2E8F0;
+    }
+
+    /* Syntax highlighting */
+    .kw { color: #C792EA; }
+    .str { color: #C3E88D; }
+    .cmt { color: #546E7A; }
+    .fn { color: #82AAFF; }
+    .num { color: #F78C6C; }
+    .type { color: #FFCB6B; }
+
+    /* ── Inline Code ── */
+    code {
+      font-family: var(--mono);
+      font-size: 13px;
+      background: var(--gray-100);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--teal-dark);
+    }
+
+    /* ── Callouts ── */
+    .callout {
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .callout-icon { flex-shrink: 0; font-size: 18px; margin-top: 1px; }
+    .callout-info {
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      color: #1E40AF;
+    }
+    .callout-warn {
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      color: #92400E;
+    }
+    .callout-tip {
+      background: var(--teal-light);
+      border: 1px solid var(--teal-mid);
+      color: var(--teal-dark);
+    }
+
+    /* ── Tables ── */
+    .content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    .content th {
+      text-align: left;
+      padding: 10px 14px;
+      background: var(--gray-50);
+      border-bottom: 2px solid var(--gray-200);
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .content td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--gray-100);
+      color: var(--gray-700);
+    }
+    .content td code { font-size: 12.5px; }
+
+    /* ── Section divider ── */
+    .section-divider {
+      height: 1px;
+      background: var(--gray-100);
+      margin: 48px 0;
+    }
+
+    /* ── API Signature ── */
+    .api-sig {
+      font-family: var(--mono);
+      font-size: 14px;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 12px;
+      overflow-x: auto;
+      color: var(--gray-700);
+    }
+    .api-sig .fn { color: var(--teal-dark); }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .content { margin-left: 0; padding: 32px 24px 80px; }
+      .search-trigger span { display: none; }
+      .nav-links { gap: 16px; }
+    }
+    @media (max-width: 500px) {
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══ Nav ═══ -->
+  <nav class="nav">
+    <a href="/" class="nav-brand">
+      <svg width="20" height="24" viewBox="-7 -9.5 14 15" fill="none">
+        <path d="M0,-8.5 C1.2,-8.5 6,-6.8 6,-3.4 L6,0 C3.6,1.275 1.2,3.4 0,4.25 C-1.2,3.4 -3.6,1.275 -6,0 L-6,-3.4 C-6,-6.8 -1.2,-8.5 0,-8.5Z" stroke="#0D9488" stroke-width="0.8" fill="none"/>
+        <path d="M0,-5.8 C0.8,-5.8 4,-4.64 4,-2.32 L4,0 C2.4,0.87 0.8,2.32 0,2.9 C-0.8,2.32 -2.4,0.87 -4,0 L-4,-2.32 C-4,-4.64 -0.8,-5.8 0,-5.8Z" stroke="#0D9488" stroke-width="0.5" stroke-opacity="0.4" fill="none"/>
+      </svg>
+      <span>Agent Passport</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/docs" class="active">Docs</a></li>
+      <li><a href="https://github.com/priyansh-x/agent-passport" target="_blank">GitHub</a></li>
+    </ul>
+    <button class="search-trigger" id="searchTrigger" onclick="openSearch()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <span>Search docs...</span>
+      <kbd>⌘K</kbd>
+    </button>
+  </nav>
+
+  <!-- ═══ Search Modal ═══ -->
+  <div class="search-modal" id="searchModal">
+    <div class="search-box">
+      <input class="search-input" id="searchInput" placeholder="Search documentation..." autocomplete="off" />
+      <div class="search-results" id="searchResults">
+        <div class="search-empty">Start typing to search...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Layout ═══ -->
+  <div class="layout">
+
+    <!-- ── Sidebar ── -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-group">
+        <div class="sidebar-label">Getting Started</div>
+        <a href="#introduction" class="sidebar-link active">Introduction</a>
+        <a href="#quickstart" class="sidebar-link">Quick Start</a>
+        <a href="#installation" class="sidebar-link">Installation</a>
+      </div>
+      <div class="sidebar-group">
+        <div class="sidebar-label">Core Concepts</div>
+        <a href="#passports" class="sidebar-link">Passports</a>
+        <a href="#permissions" class="sidebar-link">Permissions</a>
+        <a href="#delegation" class="sidebar-link">Delegation</a>
+        <a href="#revocation" class="sidebar-link">Revocation</a>
+        <a href="#spend-limits" class="sidebar-link">Spend Limits</a>
+        <a href="#audit-trail" class="sidebar-link">Audit Trail</a>
+      </div>
+      <div class="sidebar-group">
+        <div class="sidebar-label">Integrations</div>
+        <a href="#mcp" class="sidebar-link">MCP Plugin</a>
+        <a href="#middleware" class="sidebar-link">HTTP Middleware</a>
+        <a href="#langchain" class="sidebar-link">LangChain</a>
+        <a href="#crewai" class="sidebar-link">CrewAI</a>
+        <a href="#a2a" class="sidebar-link">A2A Protocol</a>
+      </div>
+      <div class="sidebar-group">
+        <div class="sidebar-label">API Reference</div>
+        <a href="#api-issuer" class="sidebar-link">PassportIssuer</a>
+        <a href="#api-types" class="sidebar-link">Types</a>
+        <a href="#api-crypto" class="sidebar-link">Crypto</a>
+        <a href="#api-errors" class="sidebar-link">Error Codes</a>
+      </div>
+      <div class="sidebar-group">
+        <div class="sidebar-label">Resources</div>
+        <a href="#security" class="sidebar-link">Security Model</a>
+        <a href="#protocol-spec" class="sidebar-link">Protocol Spec</a>
+      </div>
+    </aside>
+
+    <!-- ── Content ── -->
+    <main class="content">
+
+      <!-- ═══ Introduction ═══ -->
+      <h1 id="introduction">Documentation</h1>
+      <p class="lead">Agent Passport gives AI agents cryptographically verifiable authorization tokens — scoped permissions, spend limits, delegation chains, and instant revocation.</p>
+
+      <div class="callout callout-tip">
+        <span class="callout-icon">💡</span>
+        <div><strong>New here?</strong> Start with the <a href="#quickstart">Quick Start</a> to issue your first passport in under 2 minutes.</div>
+      </div>
+
+      <h3>Why Agent Passport?</h3>
+      <p>AI agents are calling APIs, booking meetings, moving money, and managing infrastructure — but there's no standard way to scope <em>what</em> they're allowed to do, <em>how much</em> they can spend, or to revoke access instantly when something goes wrong.</p>
+      <p>Agent Passport sits between the identity layer and the action layer, answering one question: <strong>"Is this agent allowed to do this specific thing right now?"</strong></p>
+
+      <ul>
+        <li><strong>Scoped permissions</strong> — colon-separated namespaces with wildcard matching</li>
+        <li><strong>Spend limits</strong> — budget caps tracked server-side</li>
+        <li><strong>Delegation chains</strong> — sub-agents get derived passports with narrowed scope</li>
+        <li><strong>Cascade revocation</strong> — revoking a parent kills all descendants</li>
+        <li><strong>Audit trail</strong> — every action logged with passport ID</li>
+        <li><strong>Ed25519 signatures</strong> — cryptographic proof of authorization</li>
+      </ul>
+
+      <!-- ═══ Quick Start ═══ -->
+      <h2 id="quickstart">Quick Start</h2>
+      <p>Get up and running in three steps.</p>
+
+      <h3>1. Install the SDK</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>npm install @passport-agent/sdk</pre></div>
+      </div>
+
+      <h3>2. Issue a passport</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">typescript</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="kw">import</span> { PassportIssuer } <span class="kw">from</span> <span class="str">'@passport-agent/core'</span>
+
+<span class="kw">const</span> issuer = <span class="kw">new</span> <span class="fn">PassportIssuer</span>()
+
+<span class="kw">const</span> passport = issuer.<span class="fn">issue</span>({
+  principal: <span class="str">'user:alice@company.com'</span>,
+  agent:     <span class="str">'agent:booking-bot'</span>,
+  permissions: [<span class="str">'calendar:read'</span>, <span class="str">'calendar:write'</span>],
+  limits:    { maxSpend: <span class="num">100</span>, currency: <span class="str">'USD'</span> },
+  ttl:       <span class="num">3600000</span>, <span class="cmt">// 1 hour</span>
+})</pre></div>
+      </div>
+
+      <h3>3. Authorize an action</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">typescript</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="kw">const</span> result = issuer.<span class="fn">authorize</span>(passport, <span class="str">'calendar:write'</span>, <span class="num">10</span>)
+
+<span class="kw">if</span> (result.allowed) {
+  <span class="cmt">// proceed with the action</span>
+} <span class="kw">else</span> {
+  console.<span class="fn">log</span>(<span class="str">`Denied: ${result.reason}`</span>)
+}</pre></div>
+      </div>
+
+      <div class="callout callout-info">
+        <span class="callout-icon">ℹ️</span>
+        <div>The <code>PassportIssuer</code> generates Ed25519 keys automatically. For production, you'll want to persist keys and run the <a href="#api-issuer">authority server</a>.</div>
+      </div>
+
+      <!-- ═══ Installation ═══ -->
+      <h2 id="installation">Installation</h2>
+      <p>Agent Passport is published as several scoped packages. Install only what you need.</p>
+
+      <table>
+        <thead>
+          <tr><th>Package</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>@passport-agent/core</code></td><td>Token creation, validation, policy engine, crypto</td></tr>
+          <tr><td><code>@passport-agent/sdk</code></td><td>Developer-facing API (re-exports core with extras)</td></tr>
+          <tr><td><code>@passport-agent/server</code></td><td>Passport authority REST service</td></tr>
+          <tr><td><code>@passport-agent/mcp</code></td><td>MCP middleware integration</td></tr>
+          <tr><td><code>@passport-agent/middleware</code></td><td>Express / Fastify / Next.js middleware</td></tr>
+          <tr><td><code>@passport-agent/langchain</code></td><td>LangChain tool wrapping</td></tr>
+          <tr><td><code>@passport-agent/crewai</code></td><td>CrewAI agent integration</td></tr>
+          <tr><td><code>@passport-agent/a2a</code></td><td>Agent-to-Agent protocol extension</td></tr>
+        </tbody>
+      </table>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="cmt"># Core only</span>
+npm install @passport-agent/core
+
+<span class="cmt"># With MCP plugin</span>
+npm install @passport-agent/core @passport-agent/mcp
+
+<span class="cmt"># Run the authority server</span>
+npx @passport-agent/server</pre></div>
+      </div>
+
+      <!-- ═══ Passports ═══ -->
+      <h2 id="passports">Passports</h2>
+      <p>A passport is a signed token that encodes <em>who</em> authorized an agent, <em>what</em> it can do, <em>how much</em> it can spend, and <em>when</em> it expires.</p>
+
+      <h3>Passport structure</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">json</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>{
+  <span class="str">"id"</span>:          <span class="str">"a1b2c3d4..."</span>,
+  <span class="str">"iss"</span>:         <span class="str">"agent-passport:local"</span>,
+  <span class="str">"sub"</span>:         <span class="str">"agent:booking-bot"</span>,
+  <span class="str">"principal"</span>:   <span class="str">"user:alice@company.com"</span>,
+  <span class="str">"permissions"</span>: [
+    { <span class="str">"action"</span>: <span class="str">"calendar:read"</span> },
+    { <span class="str">"action"</span>: <span class="str">"calendar:write"</span> }
+  ],
+  <span class="str">"limits"</span>: {
+    <span class="str">"maxSpend"</span>: <span class="num">100</span>,
+    <span class="str">"currency"</span>: <span class="str">"USD"</span>,
+    <span class="str">"spent"</span>:    <span class="num">0</span>
+  },
+  <span class="str">"iat"</span>:       <span class="num">1719475200000</span>,
+  <span class="str">"exp"</span>:       <span class="num">1719561600000</span>,
+  <span class="str">"parentId"</span>:  <span class="kw">null</span>,
+  <span class="str">"nonce"</span>:     <span class="str">"e5f6a7b8..."</span>
+}</pre></div>
+      </div>
+
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>string</td><td>Unique 128-bit hex identifier</td></tr>
+          <tr><td><code>iss</code></td><td>string</td><td>Issuing authority</td></tr>
+          <tr><td><code>sub</code></td><td>string</td><td>Agent receiving the passport</td></tr>
+          <tr><td><code>principal</code></td><td>string</td><td>Human who authorized the delegation</td></tr>
+          <tr><td><code>permissions</code></td><td>Permission[]</td><td>Allow-list of actions</td></tr>
+          <tr><td><code>limits</code></td><td>SpendLimit</td><td>Budget constraints</td></tr>
+          <tr><td><code>iat</code></td><td>number</td><td>Issued-at timestamp (ms)</td></tr>
+          <tr><td><code>exp</code></td><td>number</td><td>Expiration timestamp (ms)</td></tr>
+          <tr><td><code>parentId</code></td><td>string | null</td><td>Parent passport ID for delegation chains</td></tr>
+          <tr><td><code>nonce</code></td><td>string</td><td>Replay protection</td></tr>
+        </tbody>
+      </table>
+
+      <!-- ═══ Permissions ═══ -->
+      <h2 id="permissions">Permissions</h2>
+      <p>Permissions use colon-separated namespaces. The wildcard <code>*</code> matches any action within a namespace.</p>
+
+      <table>
+        <thead><tr><th>Permission</th><th>Matches</th></tr></thead>
+        <tbody>
+          <tr><td><code>calendar:read</code></td><td>Exact: <code>calendar:read</code> only</td></tr>
+          <tr><td><code>calendar:*</code></td><td>All calendar actions: <code>calendar:read</code>, <code>calendar:write</code>, etc.</td></tr>
+          <tr><td><code>*</code></td><td>Everything (use with caution)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">typescript</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="kw">import</span> { matchesPermission } <span class="kw">from</span> <span class="str">'@passport-agent/core'</span>
+
+matchesPermission(<span class="str">'calendar:read'</span>, [{ action: <span class="str">'calendar:*'</span> }])  <span class="cmt">// true</span>
+matchesPermission(<span class="str">'admin:delete'</span>,  [{ action: <span class="str">'calendar:*'</span> }])  <span class="cmt">// false</span>
+matchesPermission(<span class="str">'anything'</span>,      [{ action: <span class="str">'*'</span> }])           <span class="cmt">// true</span></pre></div>
+      </div>
+
+      <!-- ═══ Delegation ═══ -->
+      <h2 id="delegation">Delegation</h2>
+      <p>An agent can delegate a <strong>subset</strong> of its own passport to a sub-agent. Privileges can only narrow, never escalate — this is called <strong>monotonic narrowing</strong>.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">typescript</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="cmt">// Parent has calendar:* and email:send</span>
+<span class="kw">const</span> parentPassport = issuer.<span class="fn">issue</span>({
+  principal: <span class="str">'user:alice@company.com'</span>,
+  agent: <span class="str">'agent:assistant'</span>,
+  permissions: [<span class="str">'calendar:*'</span>, <span class="str">'email:send'</span>],
+  limits: { maxSpend: <span class="num">500</span> },
+})
+
+<span class="cmt">// Child gets only calendar:read, with $50 budget</span>
+<span class="kw">const</span> childPassport = issuer.<span class="fn">delegate</span>(parentPassport, {
+  agent: <span class="str">'agent:room-finder'</span>,
+  permissions: [<span class="str">'calendar:read'</span>],
+  limits: { maxSpend: <span class="num">50</span> },
+})</pre></div>
+      </div>
+
+      <h3>Delegation rules</h3>
+      <ul>
+        <li><strong>Permission subset</strong> — every child permission must be satisfiable by a parent permission</li>
+        <li><strong>Spend cap</strong> — child <code>maxSpend</code> ≤ parent's remaining budget</li>
+        <li><strong>Time bound</strong> — child <code>exp</code> ≤ parent <code>exp</code></li>
+        <li><strong>Principal preserved</strong> — the human principal is immutable across the chain</li>
+      </ul>
+
+      <div class="callout callout-warn">
+        <span class="callout-icon">⚠️</span>
+        <div><strong>Attempting to escalate privileges throws an error.</strong> You cannot grant a child permissions the parent doesn't have, or a budget exceeding the parent's remaining balance.</div>
+      </div>
+
+      <!-- ═══ Revocation ═══ -->
+      <h2 id="revocation">Revocation</h2>
+      <p>Revoking a passport <strong>cascades to all descendants</strong>. If a parent is revoked, every child and grandchild in the chain is immediately invalid.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">typescript</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="cmt">// Revoke the parent — all children are also revoked</span>
+issuer.<span class="fn">revoke</span>(parentPassport.payload.id)
+
+<span class="cmt">// This now fails even though childPassport wasn't directly revoked</span>
+issuer.<span class="fn">authorize</span>(childPassport, <span class="str">'calendar:read'</span>, <span class="num">0</span>)
+<span class="cmt">// → { allowed: false, reason: 'REVOKED' }</span></pre></div>
+      </div>
+
+      <p>Revocation is <strong>immediate and irreversible</strong>. To restore access, issue a new passport.</p>
+
+      <!-- ═══ Spend Limits ═══ -->
+      <h2 id="spend-limits">Spend Limits</h2>
+      <p>Every passport has a spend budget tracked server-side. Each <code>authorize()</code> call deducts from the budget. When the budget is exhausted, further spend actions are denied.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">typescript</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="kw">const</span> passport = issuer.<span class="fn">issue</span>({
+  principal: <span class="str">'user:alice@company.com'</span>,
+  agent: <span class="str">'agent:shopper'</span>,
+  permissions: [<span class="str">'purchase'</span>],
+  limits: { maxSpend: <span class="num">100</span>, currency: <span class="str">'USD'</span> },
+})
+
+issuer.<span class="fn">authorize</span>(passport, <span class="str">'purchase'</span>, <span class="num">80</span>)  <span class="cmt">// ✓ allowed ($80 spent)</span>
+issuer.<span class="fn">authorize</span>(passport, <span class="str">'purchase'</span>, <span class="num">30</span>)  <span class="cmt">// ✗ denied (only $20 left)</span></pre></div>
+      </div>
+
+      <!-- ═══ Audit Trail ═══ -->
+      <h2 id="audit-trail">Audit Trail</h2>
+      <p>Every <code>authorize()</code> call produces an immutable audit entry — both allowed and denied actions are logged.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">json</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>{
+  <span class="str">"id"</span>:         <span class="str">"audit-001"</span>,
+  <span class="str">"passportId"</span>: <span class="str">"a1b2c3d4..."</span>,
+  <span class="str">"action"</span>:     <span class="str">"calendar:write"</span>,
+  <span class="str">"allowed"</span>:    <span class="kw">true</span>,
+  <span class="str">"spend"</span>:      <span class="num">10</span>,
+  <span class="str">"timestamp"</span>:  <span class="num">1719475200000</span>
+}</pre></div>
+      </div>
+
+      <!-- ═══ Integrations ═══ -->
+      <h2 id="mcp">MCP Plugin</h2>
+      <p>Drop-in middleware for <a href="https://modelcontextprotocol.io">Model Context Protocol</a> servers. Intercepts tool calls and checks passports before execution.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>npm install @passport-agent/mcp</pre></div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">typescript</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="kw">import</span> { withPassport } <span class="kw">from</span> <span class="str">'@passport-agent/mcp'</span>
+
+server.<span class="fn">tool</span>(<span class="str">'book_meeting'</span>,
+  <span class="fn">withPassport</span>(<span class="str">'calendar:write'</span>, <span class="kw">async</span> (args) => {
+    <span class="cmt">// Tool executes only if passport allows calendar:write</span>
+    <span class="kw">return</span> <span class="fn">bookMeeting</span>(args)
+  })
+)</pre></div>
+      </div>
+
+      <h2 id="middleware">HTTP Middleware</h2>
+      <p>Extract and validate passports from HTTP headers. Works with Express, Fastify, and Next.js.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>npm install @passport-agent/middleware</pre></div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">typescript</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="kw">import</span> { passportGuard } <span class="kw">from</span> <span class="str">'@passport-agent/middleware'</span>
+
+app.<span class="fn">use</span>(<span class="str">'/api'</span>, <span class="fn">passportGuard</span>())
+
+app.<span class="fn">post</span>(<span class="str">'/api/book'</span>, (req, res) => {
+  <span class="cmt">// req.passport is verified and attached</span>
+  <span class="kw">const</span> { principal, permissions } = req.passport.payload
+})</pre></div>
+      </div>
+
+      <h2 id="langchain">LangChain</h2>
+      <p>Wrap LangChain tools with passport authorization. Supports both the generic <code>ToolDefinition</code> interface and the LangChain-compatible <code>invoke</code> pattern.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>npm install @passport-agent/langchain</pre></div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">typescript</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="kw">import</span> { wrapLangChainTool } <span class="kw">from</span> <span class="str">'@passport-agent/langchain'</span>
+
+<span class="kw">const</span> protectedTool = <span class="fn">wrapLangChainTool</span>(searchTool, passport, {
+  issuer,
+  permissionMapper: (name) => <span class="str">`tool:${name}`</span>,
+  callbacks: {
+    <span class="fn">onToolStart</span>: (tool, input) => console.<span class="fn">log</span>(<span class="str">`Calling ${tool}`</span>),
+    <span class="fn">onToolEnd</span>:   (tool, output) => console.<span class="fn">log</span>(<span class="str">`Done: ${tool}`</span>),
+  },
+})
+
+<span class="kw">const</span> result = <span class="kw">await</span> protectedTool.<span class="fn">invoke</span>({ query: <span class="str">'meetings'</span> })</pre></div>
+      </div>
+
+      <h2 id="crewai">CrewAI</h2>
+      <p>Build multi-agent pipelines where each agent gets a delegated passport with narrowed scope.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>npm install @passport-agent/crewai</pre></div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">typescript</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="kw">import</span> { createCrew, runPipeline } <span class="kw">from</span> <span class="str">'@passport-agent/crewai'</span>
+
+<span class="kw">const</span> crew = <span class="fn">createCrew</span>(
+  {
+    principal: <span class="str">'user:alice@company.com'</span>,
+    issuer,
+    permissions: [<span class="str">'search'</span>, <span class="str">'write'</span>, <span class="str">'publish'</span>],
+    limits: { maxSpend: <span class="num">500</span> },
+  },
+  [
+    { name: <span class="str">'researcher'</span>, role: <span class="str">'Research'</span>, permissions: [<span class="str">'search'</span>] },
+    { name: <span class="str">'writer'</span>,     role: <span class="str">'Writer'</span>,   permissions: [<span class="str">'write'</span>] },
+  ],
+)
+
+<span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">runPipeline</span>([
+  { agent: crew[<span class="num">0</span>], tasks: [{ description: <span class="str">'Research topic'</span>, requiredPermission: <span class="str">'search'</span>, execute: searchFn }] },
+  { agent: crew[<span class="num">1</span>], tasks: [{ description: <span class="str">'Write report'</span>,  requiredPermission: <span class="str">'write'</span>,  execute: writeFn }] },
+], { stopOnFailure: <span class="kw">true</span> })</pre></div>
+      </div>
+
+      <h2 id="a2a">A2A Protocol</h2>
+      <p>Extend <a href="https://google.github.io/A2A/">Agent-to-Agent</a> discovery with passport requirements. Agents can advertise required permissions in their Agent Card.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>npm install @passport-agent/a2a</pre></div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">typescript</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="kw">import</span> { createAgentCard, validatePassportForCard } <span class="kw">from</span> <span class="str">'@passport-agent/a2a'</span>
+
+<span class="kw">const</span> card = <span class="fn">createAgentCard</span>({
+  name: <span class="str">'Booking Agent'</span>,
+  description: <span class="str">'Books meetings and rooms'</span>,
+  url: <span class="str">'https://booking.example.com'</span>,
+  capabilities: [<span class="str">'calendar'</span>, <span class="str">'rooms'</span>],
+  passportRequirements: {
+    requiredPermissions: [<span class="str">'calendar:write'</span>],
+    minSpendLimit: <span class="num">50</span>,
+  },
+})
+
+<span class="kw">const</span> { valid, missingPermissions } = <span class="fn">validatePassportForCard</span>(passport, card)</pre></div>
+      </div>
+
+      <!-- ═══ API Reference ═══ -->
+      <h2 id="api-issuer">PassportIssuer</h2>
+      <p>The central class for issuing, validating, delegating, and revoking passports.</p>
+
+      <div class="api-sig"><span class="kw">new</span> <span class="fn">PassportIssuer</span>()</div>
+      <p>Creates a new issuer with a freshly generated Ed25519 key pair.</p>
+
+      <h3>.issue(options)</h3>
+      <div class="api-sig"><span class="fn">issue</span>(options: <span class="type">IssueOptions</span>): <span class="type">SignedPassport</span></div>
+      <table>
+        <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>principal</code></td><td>string</td><td>Human authorizing the agent</td></tr>
+          <tr><td><code>agent</code></td><td>string</td><td>Agent identifier</td></tr>
+          <tr><td><code>permissions</code></td><td>string[]</td><td>List of permission strings</td></tr>
+          <tr><td><code>limits</code></td><td>{ maxSpend, currency? }</td><td>Optional spend constraints</td></tr>
+          <tr><td><code>ttl</code></td><td>number</td><td>Time-to-live in milliseconds</td></tr>
+        </tbody>
+      </table>
+
+      <h3>.authorize(passport, action, spend?)</h3>
+      <div class="api-sig"><span class="fn">authorize</span>(passport: <span class="type">SignedPassport</span>, action: <span class="type">string</span>, spend?: <span class="type">number</span>): <span class="type">AuthorizeResult</span></div>
+      <p>Checks if the passport allows the given action with the given spend amount. Returns <code>{ allowed: boolean, reason?: string }</code>.</p>
+
+      <h3>.delegate(parent, options)</h3>
+      <div class="api-sig"><span class="fn">delegate</span>(parent: <span class="type">SignedPassport</span>, options: <span class="type">DelegateOptions</span>): <span class="type">SignedPassport</span></div>
+      <p>Creates a child passport with narrowed permissions. Throws if the child would escalate privileges.</p>
+
+      <h3>.revoke(passportId)</h3>
+      <div class="api-sig"><span class="fn">revoke</span>(passportId: <span class="type">string</span>): <span class="type">void</span></div>
+      <p>Revokes a passport and all descendants in the delegation chain.</p>
+
+      <!-- ═══ Types ═══ -->
+      <h2 id="api-types">Types</h2>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">typescript</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="kw">interface</span> <span class="type">Permission</span> {
+  action: <span class="type">string</span>
+  resource?: <span class="type">string</span>
+}
+
+<span class="kw">interface</span> <span class="type">SpendLimit</span> {
+  maxSpend: <span class="type">number</span>
+  currency: <span class="type">string</span>
+  spent: <span class="type">number</span>
+}
+
+<span class="kw">interface</span> <span class="type">PassportPayload</span> {
+  id: <span class="type">string</span>
+  iss: <span class="type">string</span>
+  sub: <span class="type">string</span>
+  principal: <span class="type">string</span>
+  permissions: <span class="type">Permission</span>[]
+  limits: <span class="type">SpendLimit</span>
+  iat: <span class="type">number</span>
+  exp: <span class="type">number</span>
+  parentId: <span class="type">string</span> | <span class="kw">null</span>
+  nonce: <span class="type">string</span>
+}
+
+<span class="kw">interface</span> <span class="type">SignedPassport</span> {
+  payload: <span class="type">PassportPayload</span>
+  signature: <span class="type">string</span>
+  publicKey: <span class="type">string</span>
+}
+
+<span class="kw">interface</span> <span class="type">AuthorizeResult</span> {
+  allowed: <span class="type">boolean</span>
+  reason?: <span class="type">string</span>
+}</pre></div>
+      </div>
+
+      <!-- ═══ Crypto ═══ -->
+      <h2 id="api-crypto">Crypto</h2>
+      <p>Agent Passport uses <strong>Ed25519</strong> for all signatures. Keys are generated automatically by <code>PassportIssuer</code>, but you can use the primitives directly.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">typescript</span>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="kw">import</span> { generateKeyPair, sign, verify, toHex } <span class="kw">from</span> <span class="str">'@passport-agent/core'</span>
+
+<span class="kw">const</span> { publicKey, privateKey } = <span class="fn">generateKeyPair</span>()
+
+<span class="kw">const</span> data = <span class="str">'hello world'</span>
+<span class="kw">const</span> sig = <span class="fn">sign</span>(privateKey, data)
+<span class="kw">const</span> valid = <span class="fn">verify</span>(publicKey, data, sig) <span class="cmt">// true</span></pre></div>
+      </div>
+
+      <!-- ═══ Error Codes ═══ -->
+      <h2 id="api-errors">Error Codes</h2>
+      <p>When <code>authorize()</code> returns <code>allowed: false</code>, the <code>reason</code> field contains one of these codes:</p>
+
+      <table>
+        <thead><tr><th>Code</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>REVOKED</code></td><td>Passport or an ancestor has been revoked</td></tr>
+          <tr><td><code>EXPIRED</code></td><td>Current time is past <code>exp</code></td></tr>
+          <tr><td><code>PERMISSION_DENIED</code></td><td>No matching permission for the requested action</td></tr>
+          <tr><td><code>SPEND_LIMIT_EXCEEDED</code></td><td>Requested spend exceeds remaining budget</td></tr>
+          <tr><td><code>INVALID_SIGNATURE</code></td><td>Signature verification failed</td></tr>
+        </tbody>
+      </table>
+
+      <!-- ═══ Security ═══ -->
+      <h2 id="security">Security Model</h2>
+      <ul>
+        <li><strong>Ed25519 signatures</strong> on every passport — tamper-proof</li>
+        <li><strong>Server-side spend tracking</strong> — clients can't manipulate budgets</li>
+        <li><strong>Nonces</strong> prevent replay attacks</li>
+        <li><strong>Monotonic narrowing</strong> — delegation can only reduce privileges</li>
+        <li><strong>Cascade revocation</strong> — one call kills the entire chain</li>
+        <li><strong>Append-only audit log</strong> — every action is recorded</li>
+      </ul>
+
+      <div class="callout callout-warn">
+        <span class="callout-icon">⚠️</span>
+        <div><strong>Transmit passports over TLS only.</strong> Private keys must never leave the authority. Treat signed passports as bearer tokens.</div>
+      </div>
+
+      <!-- ═══ Protocol Spec ═══ -->
+      <h2 id="protocol-spec">Protocol Spec</h2>
+      <p>The full protocol specification is available in the repository at <a href="https://github.com/priyansh-x/agent-passport/blob/main/docs/protocol-spec.md"><code>docs/protocol-spec.md</code></a>. It covers:</p>
+      <ul>
+        <li>Token format and field definitions</li>
+        <li>Permission matching algorithm</li>
+        <li>Delegation invariants (monotonic narrowing proof)</li>
+        <li>Revocation cascade semantics</li>
+        <li>Wire formats: Simple Mode (JWT-like) and Chain Mode (Biscuit, planned)</li>
+        <li>Cryptographic scheme details</li>
+      </ul>
+
+    </main>
+  </div>
+
+  <script>
+    // ── Scroll Spy ──
+    const sections = document.querySelectorAll('h1[id], h2[id]');
+    const sidebarLinks = document.querySelectorAll('.sidebar-link');
+
+    function updateSpy() {
+      let current = '';
+      for (const section of sections) {
+        const top = section.getBoundingClientRect().top;
+        if (top < 120) current = section.id;
+      }
+      sidebarLinks.forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+      });
+    }
+    window.addEventListener('scroll', updateSpy, { passive: true });
+    updateSpy();
+
+    // ── Copy Code ──
+    function copyCode(btn) {
+      const code = btn.closest('.code-block').querySelector('pre').textContent;
+      navigator.clipboard.writeText(code);
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    }
+
+    // ── Search ──
+    const searchEntries = [];
+    sections.forEach(s => {
+      const nextP = s.nextElementSibling;
+      const desc = nextP && nextP.tagName === 'P' ? nextP.textContent.slice(0, 100) : '';
+      searchEntries.push({ id: s.id, title: s.textContent, desc });
+    });
+
+    function openSearch() {
+      document.getElementById('searchModal').classList.add('open');
+      const input = document.getElementById('searchInput');
+      input.value = '';
+      input.focus();
+      renderResults('');
+    }
+    function closeSearch() {
+      document.getElementById('searchModal').classList.remove('open');
+    }
+
+    document.getElementById('searchModal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeSearch();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        openSearch();
+      }
+      if (e.key === 'Escape') closeSearch();
+    });
+
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      renderResults(e.target.value);
+    });
+
+    function renderResults(query) {
+      const container = document.getElementById('searchResults');
+      if (!query.trim()) {
+        container.innerHTML = '<div class="search-empty">Start typing to search...</div>';
+        return;
+      }
+      const q = query.toLowerCase();
+      const matches = searchEntries.filter(e =>
+        e.title.toLowerCase().includes(q) || e.desc.toLowerCase().includes(q)
+      );
+      if (matches.length === 0) {
+        container.innerHTML = '<div class="search-empty">No results found.</div>';
+        return;
+      }
+      container.innerHTML = matches.map(m =>
+        `<a class="search-result" href="#${m.id}" onclick="closeSearch()">
+          ${m.title}
+          <small>${m.desc}</small>
+        </a>`
+      ).join('');
+    }
+  </script>
+</body>
+</html>

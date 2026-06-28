@@ -9,7 +9,7 @@ interface ServerHealth {
 
 export function Settings() {
   const [health, setHealth] = useState<ServerHealth | null>(null)
-  const [serverUrl, setServerUrl] = useState('http://localhost:3100')
+  const [serverUrl] = useState('http://localhost:3100')
   const [copied, setCopied] = useState<string | null>(null)
 
   useEffect(() => {
