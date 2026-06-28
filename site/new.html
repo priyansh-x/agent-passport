@@ -176,36 +176,6 @@
       max-width: 440px;
     }
 
-    .hero-features {
-      margin-top: 28px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .hero-feature {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--gray-700);
-    }
-
-    .hero-feature .check {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: var(--teal-light);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--teal);
-      font-size: 11px;
-      font-weight: 700;
-      flex-shrink: 0;
-    }
-
     .hero-actions {
       margin-top: 36px;
       display: flex;
@@ -272,23 +242,21 @@
       position: relative;
     }
 
-    .passport-visual .passport-emoji {
+    #globeCanvas {
       position: absolute;
-      top: -30px;
-      right: -20px;
-      font-size: 56px;
-      transform: rotate(12deg);
-      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.08));
-      animation: floatPassport 4s ease-in-out infinite;
-      z-index: 2;
-    }
-
-    @keyframes floatPassport {
-      0%, 100% { transform: rotate(12deg) translateY(0); }
-      50% { transform: rotate(12deg) translateY(-10px); }
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 420px;
+      height: 420px;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.5;
     }
 
     .passport-card {
+      position: relative;
+      z-index: 1;
       background: var(--white);
       border: 1px solid var(--gray-200);
       border-radius: 16px;
@@ -872,10 +840,14 @@
       margin: 0 auto;
     }
 
-    .cta-passport {
-      font-size: 64px;
+    .cta-shield {
       margin-bottom: 24px;
-      animation: floatPassport 4s ease-in-out infinite;
+      animation: floatShield 4s ease-in-out infinite;
+    }
+
+    @keyframes floatShield {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
     }
 
     .cta-title {
@@ -973,7 +945,7 @@
       footer { padding: 24px 20px; }
       .audit-thead { display: none; }
       .audit-row { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 14px 20px; }
-      .passport-visual .passport-emoji { top: -20px; right: -10px; font-size: 40px; }
+      #globeCanvas { width: 300px; height: 300px; }
     }
 
     @media (max-width: 500px) {
@@ -1019,21 +991,15 @@
   <section class="hero">
     <div class="hero-text">
       <h1 class="reveal">The authorization layer <span>your AI agents are missing</span></h1>
-      <p class="hero-sub reveal reveal-delay-1">Before an agent calls any tool or API, it presents a passport — a cryptographically signed token proving who authorized it, what it can do, and when to cut it off.</p>
-      <div class="hero-features reveal reveal-delay-2">
-        <div class="hero-feature"><span class="check">✓</span> Ed25519-signed JWT + Biscuit tokens</div>
-        <div class="hero-feature"><span class="check">✓</span> Delegation chains that only narrow, never escalate</div>
-        <div class="hero-feature"><span class="check">✓</span> Revoke a parent → all children die instantly</div>
-        <div class="hero-feature"><span class="check">✓</span> Every action logged to an immutable audit trail</div>
-      </div>
-      <div class="hero-actions reveal reveal-delay-3">
+      <p class="hero-sub reveal reveal-delay-1">Scoped permissions, spend limits, delegation chains, and cascade revocation. Every action cryptographically signed and logged.</p>
+      <div class="hero-actions reveal reveal-delay-2">
         <a href="https://github.com/priyansh-x/agent-passport" target="_blank" rel="noopener" class="btn-primary">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
           View on GitHub
         </a>
         <a href="#how" class="btn-ghost">How it works</a>
       </div>
-      <div class="hero-install reveal reveal-delay-4" onclick="copyInstall()">
+      <div class="hero-install reveal reveal-delay-3" onclick="copyInstall()">
         <span class="dollar">$</span>
         <span>npm install @passport-agent/sdk</span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
@@ -1041,7 +1007,7 @@
     </div>
 
     <div class="passport-visual reveal reveal-delay-2">
-      <div class="passport-emoji">🛂</div>
+      <canvas id="globeCanvas" width="420" height="420"></canvas>
       <div class="passport-card">
         <div class="passport-header">
           <div class="passport-header-left">
@@ -1315,7 +1281,12 @@
   <!-- ═══ CTA ═══ -->
   <div class="section-border"></div>
   <section class="cta-section">
-    <div class="cta-passport reveal">🛂</div>
+    <div class="cta-shield reveal">
+      <svg width="48" height="58" viewBox="-7 -9.5 14 15" fill="none">
+        <path d="M0,-8.5 C1.2,-8.5 6,-6.8 6,-3.4 L6,0 C3.6,1.275 1.2,3.4 0,4.25 C-1.2,3.4 -3.6,1.275 -6,0 L-6,-3.4 C-6,-6.8 -1.2,-8.5 0,-8.5Z" stroke="#0D9488" stroke-width="0.5" fill="none"/>
+        <path d="M0,-5.8 C0.8,-5.8 4,-4.64 4,-2.32 L4,0 C2.4,0.87 0.8,2.32 0,2.9 C-0.8,2.32 -2.4,0.87 -4,0 L-4,-2.32 C-4,-4.64 -0.8,-5.8 0,-5.8Z" stroke="#0D9488" stroke-width="0.3" stroke-opacity="0.4" fill="none"/>
+      </svg>
+    </div>
     <h2 class="cta-title reveal reveal-delay-1">Start in ten lines. <span>Scale to production.</span></h2>
     <p class="cta-desc reveal reveal-delay-2">Open protocol. MIT licensed. No vendor lock-in.</p>
     <div class="cta-install reveal reveal-delay-3" onclick="copyInstall()">
@@ -1390,6 +1361,89 @@
       window.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
       window.addEventListener('mouseleave', () => { mouseX = -1000; mouseY = -1000; });
       resize();
+      draw();
+    })();
+
+    // ── 3D Globe behind passport card ──
+    (function() {
+      const canvas = document.getElementById('globeCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W = 420, H = 420;
+      const cx = W / 2, cy = H / 2, R = 160;
+      let angle = 0;
+
+      const points = [];
+      const RINGS = 12, PER_RING = 24;
+      for (let i = 0; i <= RINGS; i++) {
+        const phi = (Math.PI * i) / RINGS;
+        for (let j = 0; j < PER_RING; j++) {
+          const theta = (2 * Math.PI * j) / PER_RING;
+          points.push({
+            x: Math.sin(phi) * Math.cos(theta),
+            y: Math.cos(phi),
+            z: Math.sin(phi) * Math.sin(theta),
+          });
+        }
+      }
+
+      const meridians = 6;
+      for (let m = 0; m < meridians; m++) {
+        const theta = (Math.PI * m) / meridians;
+        for (let i = 0; i <= 48; i++) {
+          const phi = (Math.PI * i) / 48;
+          points.push({
+            x: Math.sin(phi) * Math.cos(theta),
+            y: Math.cos(phi),
+            z: Math.sin(phi) * Math.sin(theta),
+          });
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        const cosA = Math.cos(angle), sinA = Math.sin(angle);
+
+        const projected = points.map(p => {
+          const x = p.x * cosA - p.z * sinA;
+          const z = p.x * sinA + p.z * cosA;
+          return { px: cx + x * R, py: cy + p.y * R, z, front: z > -0.1 };
+        });
+
+        for (const p of projected) {
+          if (!p.front) continue;
+          const alpha = 0.15 + p.z * 0.35;
+          const size = 1.2 + p.z * 0.8;
+          ctx.beginPath();
+          ctx.arc(p.px, p.py, size, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(13, 148, 136, ${alpha})`;
+          ctx.fill();
+        }
+
+        // draw connecting arcs for nearby front-facing points
+        for (let i = 0; i < projected.length; i++) {
+          const a = projected[i];
+          if (!a.front) continue;
+          for (let j = i + 1; j < Math.min(i + 3, projected.length); j++) {
+            const b = projected[j];
+            if (!b.front) continue;
+            const dx = a.px - b.px, dy = a.py - b.py;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < 40) {
+              ctx.beginPath();
+              ctx.moveTo(a.px, a.py);
+              ctx.lineTo(b.px, b.py);
+              ctx.strokeStyle = `rgba(13, 148, 136, ${0.06 + Math.min(a.z, b.z) * 0.1})`;
+              ctx.lineWidth = 0.5;
+              ctx.stroke();
+            }
+          }
+        }
+
+        angle += 0.003;
+        requestAnimationFrame(draw);
+      }
+
       draw();
     })();
 
