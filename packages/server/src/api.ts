@@ -1,9 +1,12 @@
 import { Hono } from 'hono';
 import { PassportIssuer } from '@passport-agent/core';
 import { PassportDB } from './db.js';
+import { rateLimiter } from './rate-limit.js';
 
 export function createApi(issuer: PassportIssuer, db: PassportDB) {
   const app = new Hono();
+
+  app.use('/v1/*', rateLimiter({ windowMs: 60_000, maxRequests: 100 }));
 
   app.get('/health', (c) => c.json({ status: 'ok' }));
 

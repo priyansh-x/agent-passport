@@ -29,6 +29,8 @@ function parsePermissions(perms: string[]): Permission[] {
 }
 
 const DEFAULT_EXPIRY = 24 * 60 * 60 * 1000;
+const MAX_DELEGATION_DEPTH = 10;
+const MAX_PERMISSIONS = 50;
 
 export class PassportIssuer {
   private keyPair: KeyPair;
@@ -46,6 +48,9 @@ export class PassportIssuer {
   }
 
   issue(options: IssueOptions): SignedPassport {
+    if (options.permissions.length > MAX_PERMISSIONS) {
+      throw new Error(`Too many permissions: ${options.permissions.length} exceeds maximum of ${MAX_PERMISSIONS}`);
+    }
     const now = Date.now();
     const payload: PassportPayload = {
       id: randomId(),
@@ -69,7 +74,28 @@ export class PassportIssuer {
     return signed;
   }
 
+  private getDelegationDepth(passport: SignedPassport): number {
+    let depth = 0;
+    let current = passport;
+    while (current.payload.parentId) {
+      depth++;
+      const parent = this.passports.get(current.payload.parentId);
+      if (!parent) break;
+      current = parent;
+    }
+    return depth;
+  }
+
   delegate(parent: SignedPassport, options: DelegateOptions): SignedPassport {
+    const depth = this.getDelegationDepth(parent);
+    if (depth >= MAX_DELEGATION_DEPTH) {
+      throw new Error(`Delegation denied: maximum chain depth of ${MAX_DELEGATION_DEPTH} exceeded`);
+    }
+
+    if (options.permissions.length > MAX_PERMISSIONS) {
+      throw new Error(`Too many permissions: ${options.permissions.length} exceeds maximum of ${MAX_PERMISSIONS}`);
+    }
+
     const childPerms = parsePermissions(options.permissions);
 
     if (!isSubsetPermissions(childPerms, parent.payload.permissions)) {
