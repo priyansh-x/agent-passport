@@ -3,942 +3,985 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Agent Passport — Cryptographic Authorization for AI Agents</title>
+  <title>Agent Passport — Authorization for AI Agents</title>
   <meta name="description" content="Scoped permissions, spend limits, delegation chains, instant revocation. The authorization layer AI agents are missing." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --void: #09090b;
-      --bone: #fafaf9;
-      --zinc: #a1a1aa;
-      --muted: #52525b;
-      --rule: rgba(255,255,255,0.08);
-      --allow: #22c55e;
-      --deny: #ef4444;
-      --seal: #eab308;
-      --link: #ca8a04;
-      --term-bg: #0c0c10;
-      --sans: 'Inter', system-ui, sans-serif;
+      --white: #FFFFFF;
+      --black: #0A0A0A;
+      --gray-900: #171717;
+      --gray-700: #404040;
+      --gray-500: #737373;
+      --gray-400: #A3A3A3;
+      --gray-300: #D4D4D4;
+      --gray-200: #E5E5E5;
+      --gray-100: #F5F5F5;
+      --gray-50: #FAFAFA;
+      --teal: #0D9488;
+      --teal-dark: #0F766E;
+      --teal-light: #F0FDFA;
+      --teal-mid: #CCFBF1;
+      --allow: #16A34A;
+      --allow-bg: #F0FDF4;
+      --deny: #DC2626;
+      --deny-bg: #FEF2F2;
+      --font: 'Manrope', system-ui, sans-serif;
       --mono: 'JetBrains Mono', monospace;
     }
 
-    html { scrollbar-width: thin; scrollbar-color: #333 var(--void); }
+    html { scroll-behavior: smooth; }
 
     body {
-      font-family: var(--sans);
-      background: var(--void);
-      color: var(--bone);
-      overflow-x: hidden;
+      font-family: var(--font);
+      background: var(--white);
+      color: var(--black);
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
 
-    body::before {
-      content: '';
+    /* ── Intro Overlay ── */
+    #introOverlay {
       position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-      background-size: 60px 60px;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 9999;
+      background: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.8s ease;
+    }
+    #introOverlay.fade-out {
+      opacity: 0;
       pointer-events: none;
-      z-index: 0;
+    }
+    #introCanvas {
+      width: 100%; height: 100%;
     }
 
-    .page { position: relative; z-index: 1; }
+    /* ── Interactive Background ── */
+    #dotCanvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 1s ease 2s;
+    }
+    #dotCanvas.visible { opacity: 1; }
+
+    /* ── Hero Fade In (CSS-only, no JS dependency) ── */
+    .hero-fade {
+      opacity: 0;
+      transform: translateY(24px);
+      animation: heroFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .hero-fade-1 { animation-delay: 2.2s; }
+    .hero-fade-2 { animation-delay: 2.4s; }
+    .hero-fade-3 { animation-delay: 2.6s; }
+    .hero-fade-4 { animation-delay: 2.8s; }
+
+    @keyframes heroFadeIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Scroll Reveal ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
 
     /* ── Nav ── */
     .nav {
       position: fixed;
       top: 0; left: 0; right: 0;
       z-index: 50;
-      padding: 14px 32px;
+      padding: 16px 40px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(9,9,11,0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--rule);
+      background: rgba(255,255,255,0.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      transition: box-shadow 0.3s;
     }
 
-    .nav-mark {
-      font-family: var(--mono);
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--bone);
-      text-decoration: none;
+    .nav.scrolled { box-shadow: 0 1px 12px rgba(0,0,0,0.06); }
+
+    .nav-brand {
       display: inline-flex;
       align-items: center;
       gap: 10px;
-    }
-
-    .nav-shield { width: 18px; height: 22px; }
-
-    .nav-links { display: flex; gap: 28px; list-style: none; }
-    .nav-links a {
-      font-family: var(--sans);
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--zinc);
       text-decoration: none;
-      transition: color 0.2s;
+      color: var(--black);
     }
-    .nav-links a:hover { color: var(--bone); }
+
+    .nav-brand .shield-logo { transition: transform 0.3s; }
+    .nav-brand:hover .shield-logo { transform: scale(1.1); }
+
+    .nav-brand span {
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gray-500);
+      text-decoration: none;
+      padding: 7px 14px;
+      border-radius: 8px;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--black); background: var(--gray-100); }
+
+    .nav-cta {
+      font-size: 14px !important;
+      font-weight: 600 !important;
+      color: var(--white) !important;
+      background: var(--black) !important;
+      padding: 8px 18px !important;
+      border-radius: 8px !important;
+      transition: opacity 0.2s, transform 0.2s !important;
+    }
+
+    .nav-cta:hover { opacity: 0.85 !important; transform: translateY(-1px) !important; }
+
+    /* ── Shield Logo SVG (reusable) ── */
+    .shield-logo-svg {
+      display: inline-block;
+      vertical-align: middle;
+    }
 
     /* ── Hero ── */
     .hero {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
+      position: relative;
+      z-index: 1;
+      padding: 160px 40px 120px;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
       align-items: center;
-      text-align: center;
-      padding: 80px 24px 32px;
+      overflow: visible;
     }
 
-    .hero-label {
-      font-family: var(--mono);
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: 0.04em;
-      color: var(--zinc);
-      padding: 6px 14px;
-      border: 1px solid var(--rule);
-      border-radius: 100px;
-      margin-bottom: 20px;
-      opacity: 0; animation: fadeIn 0.6s ease 0.2s forwards;
+    .hero-text h1 {
+      font-size: clamp(40px, 5vw, 60px);
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -0.035em;
+      color: var(--black);
     }
 
-    @keyframes fadeIn { to { opacity: 1; } }
-
-    .hero h1 {
-      font-family: var(--sans);
-      font-size: clamp(32px, 5vw, 56px);
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      line-height: 1.1;
-      max-width: 700px;
-      margin-bottom: 10px;
-      opacity: 0; animation: fadeUp 0.8s ease 0.3s forwards;
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .hero h1 .hl {
-      background: linear-gradient(135deg, var(--seal) 0%, #f59e0b 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .hero-text h1 span {
+      font-weight: 300;
+      color: var(--gray-400);
     }
 
     .hero-sub {
+      margin-top: 24px;
       font-size: 17px;
-      color: var(--zinc);
-      max-width: 460px;
-      line-height: 1.6;
-      margin-bottom: 40px;
-      opacity: 0; animation: fadeUp 0.7s ease 0.45s forwards;
+      line-height: 1.65;
+      color: var(--gray-500);
+      max-width: 440px;
     }
 
-    /* ── Terminal ── */
-    .terminal-wrap {
-      width: 100%;
-      max-width: 580px;
-      opacity: 0; animation: fadeUp 0.8s ease 0.6s forwards;
-    }
-
-    .terminal {
-      background: var(--term-bg);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow:
-        0 0 0 1px rgba(255,255,255,0.05),
-        0 20px 60px rgba(0,0,0,0.5);
-      position: relative;
-    }
-
-    .terminal-bar {
+    .hero-actions {
+      margin-top: 36px;
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 12px 16px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .terminal-dot:nth-child(1) { background: #ef4444; }
-    .terminal-dot:nth-child(2) { background: #eab308; }
-    .terminal-dot:nth-child(3) { background: #22c55e; }
-
-    .terminal-title {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--muted);
-      margin-left: 8px;
-    }
-
-    .terminal-body {
-      padding: 12px 18px;
-      font-family: var(--mono);
-      font-size: 12px;
-      line-height: 1.7;
-    }
-
-    .t-kw { color: #c4b5fd; }
-    .t-fn { color: #93c5fd; }
-    .t-str { color: #86efac; }
-    .t-prop { color: #e2e8f0; }
-    .t-num { color: #fbbf24; }
-    .t-cmt { color: var(--muted); }
-    .t-ok { color: var(--allow); font-weight: 500; }
-    .t-no { color: var(--deny); font-weight: 500; }
-    .t-seal { color: var(--seal); }
-    .t-dim { color: var(--muted); }
-
-    .scene-label {
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.08em;
-      margin-bottom: 8px;
-    }
-
-    .passport-card {
-      margin: 0;
-      padding: 10px 14px;
-      background: rgba(234,179,8,0.04);
-      border: 1px solid rgba(234,179,8,0.12);
-      border-radius: 6px;
-      font-size: 12px;
-      line-height: 1.7;
-    }
-
-    .terminal-divider {
-      height: 1px;
-      background: rgba(255,255,255,0.06);
-      margin: 10px 0;
-    }
-
-    /* Interactive section */
-    .try-section {
-      padding: 0 18px 14px;
-      font-family: var(--mono);
-      font-size: 12px;
-    }
-
-    .try-label {
-      font-size: 11px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 8px;
-    }
-
-    .try-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 10px;
-    }
-
-    .try-chip {
-      padding: 5px 12px;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 6px;
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--zinc);
-      cursor: pointer;
-      transition: all 0.15s;
-      background: transparent;
-    }
-    .try-chip:hover { border-color: rgba(255,255,255,0.25); color: var(--bone); }
-    .try-chip.allowed { border-color: rgba(34,197,94,0.3); color: var(--allow); }
-    .try-chip.denied { border-color: rgba(239,68,68,0.3); color: var(--deny); }
-
-    .try-input-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .try-prompt { color: var(--muted); }
-
-    .try-input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--bone);
-      caret-color: var(--bone);
-    }
-    .try-input::placeholder { color: #3f3f46; }
-
-    .try-result {
-      margin-top: 10px;
-      min-height: 22px;
-      font-size: 13px;
-      transition: opacity 0.15s;
-    }
-
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20% { transform: translateX(-4px); }
-      40% { transform: translateX(4px); }
-      60% { transform: translateX(-3px); }
-      80% { transform: translateX(2px); }
-    }
-    .terminal.shake { animation: shake 0.35s ease; }
-
-    /* ── Hero CTA ── */
-    .hero-cta {
-      margin-top: 28px;
-      display: flex;
       gap: 12px;
-      align-items: center;
-      justify-content: center;
-      flex-wrap: wrap;
-      opacity: 0; animation: fadeUp 0.6s ease 0.85s forwards;
     }
 
-    .btn {
+    .btn-primary {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 11px 22px;
-      font-family: var(--sans);
-      font-size: 14px;
+      padding: 12px 24px;
+      font-family: var(--font);
+      font-size: 15px;
       font-weight: 600;
-      text-decoration: none;
+      color: var(--white);
+      background: var(--black);
       border: none;
+      border-radius: 10px;
       cursor: pointer;
-      transition: all 0.2s;
-      border-radius: 6px;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
     }
 
-    .btn-primary { background: var(--bone); color: var(--void); }
-    .btn-primary:hover { background: #fff; box-shadow: 0 0 20px rgba(255,255,255,0.12); }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
 
     .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      font-family: var(--font);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--gray-700);
       background: transparent;
-      color: var(--zinc);
-      border: 1px solid rgba(255,255,255,0.12);
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.2s, color 0.2s, transform 0.2s;
     }
-    .btn-ghost:hover { border-color: rgba(255,255,255,0.3); color: var(--bone); }
 
-    .install-cmd {
+    .btn-ghost:hover { border-color: var(--gray-400); color: var(--black); transform: translateY(-1px); }
+
+    .hero-install {
+      margin-top: 20px;
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      padding: 10px 18px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--rule);
-      border-radius: 6px;
       font-family: var(--mono);
       font-size: 13px;
-      color: var(--zinc);
+      color: var(--gray-400);
       cursor: pointer;
-      transition: all 0.2s;
-      margin-top: 10px;
-      opacity: 0; animation: fadeUp 0.6s ease 1s forwards;
-    }
-    .install-cmd:hover { border-color: rgba(255,255,255,0.2); color: var(--bone); }
-    .install-cmd .dollar { color: var(--allow); }
-    .install-cmd .copied { color: var(--allow); font-size: 12px; display: none; }
-
-    /* ── Sections ── */
-    .section { padding: 140px 0; }
-
-    .section-inner {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 0 32px;
+      padding: 6px 0;
+      transition: color 0.2s;
     }
 
-    .section-tag {
-      font-family: var(--mono);
+    .hero-install:hover { color: var(--gray-700); }
+    .hero-install .dollar { color: var(--teal); }
+
+    /* ── Passport Visual (Hero Right) ── */
+    .passport-visual {
+      position: relative;
+      overflow: visible;
+      min-height: 500px;
+    }
+
+    .passport-card {
+      position: relative;
+      z-index: 1;
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 40px rgba(0,0,0,0.06);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s;
+    }
+
+    .passport-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 16px 56px rgba(0,0,0,0.1);
+    }
+
+    .passport-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(135deg, var(--teal-light), var(--white));
+    }
+
+    .passport-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .passport-header-left span {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--gray-500);
+    }
+
+    .passport-status {
       font-size: 11px;
-      font-weight: 500;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: var(--allow-bg);
+      color: var(--allow);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(22,163,74,0.2); }
+      50% { box-shadow: 0 0 0 6px rgba(22,163,74,0); }
+    }
+
+    .passport-body { padding: 24px; }
+
+    .passport-field { margin-bottom: 16px; }
+    .passport-field:last-child { margin-bottom: 0; }
+
+    .passport-label {
+      font-size: 10px;
+      font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--seal);
+      color: var(--gray-400);
+      margin-bottom: 4px;
+    }
+
+    .passport-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--black);
+    }
+
+    .passport-value.mono {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .passport-perms {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .passport-perm {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: var(--teal-light);
+      color: var(--teal);
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .passport-perm:hover {
+      background: var(--teal-mid);
+      transform: translateY(-1px);
+    }
+
+    .passport-limits {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .passport-limit {
+      padding: 12px;
+      border-radius: 8px;
+      background: var(--gray-50);
+      transition: background 0.2s;
+    }
+
+    .passport-limit:hover { background: var(--gray-100); }
+
+    .passport-limit-val {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--black);
+    }
+
+    .passport-limit-label {
+      font-size: 11px;
+      color: var(--gray-400);
+      margin-top: 2px;
+    }
+
+    .passport-chain {
+      padding: 16px 24px 20px;
+      border-top: 1px solid var(--gray-200);
+      background: var(--gray-50);
+    }
+
+    .passport-chain-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gray-400);
+      margin-bottom: 12px;
+    }
+
+    .chain-flow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chain-node {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      color: var(--gray-700);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .chain-node:hover { border-color: var(--teal); box-shadow: 0 0 0 2px var(--teal-light); }
+
+    .chain-node .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+    }
+
+    .chain-node .dot.human { background: var(--teal); }
+    .chain-node .dot.agent { background: #3B82F6; }
+    .chain-node .dot.sub { background: #8B5CF6; }
+
+    .chain-arrow {
+      color: var(--gray-300);
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    /* ── Sections ── */
+    .section {
+      position: relative;
+      z-index: 1;
+      padding: 120px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-border { border-top: 1px solid var(--gray-200); position: relative; z-index: 1; }
+
+    .section-tag {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--teal);
       margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-tag::before {
+      content: '';
+      width: 24px;
+      height: 2px;
+      background: var(--teal);
+      border-radius: 1px;
     }
 
     .section-title {
-      font-family: var(--sans);
-      font-size: clamp(26px, 4vw, 42px);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      line-height: 1.2;
-      max-width: 560px;
-      margin-bottom: 14px;
+      font-size: clamp(28px, 3.5vw, 42px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      color: var(--black);
+      max-width: 600px;
     }
+
+    .section-title span { font-weight: 300; color: var(--gray-400); }
 
     .section-desc {
-      font-size: 16px;
-      line-height: 1.7;
-      color: var(--zinc);
-      max-width: 480px;
+      font-size: 17px;
+      line-height: 1.65;
+      color: var(--gray-500);
+      max-width: 560px;
+      margin-top: 16px;
     }
 
-    .reveal {
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1);
-    }
-    .reveal.visible { opacity: 1; transform: translateY(0); }
-
-    /* ── Stats ── */
-    .stats {
+    /* ── Problem Section ── */
+    .compare-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1px;
-      background: var(--rule);
-      border: 1px solid var(--rule);
-      border-radius: 8px;
-      overflow: hidden;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
       margin-top: 56px;
     }
 
-    .stat {
-      padding: 36px 28px;
-      background: var(--void);
-      text-align: center;
+    .compare-card {
+      padding: 32px;
+      border-radius: 16px;
+      border: 1px solid var(--gray-200);
+      transition: transform 0.3s, box-shadow 0.3s;
     }
 
-    .stat-num {
-      font-family: var(--sans);
-      font-size: 44px;
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      margin-bottom: 6px;
+    .compare-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.04);
     }
 
-    .stat-num .pct { color: var(--deny); }
+    .compare-card.without { background: var(--gray-50); }
 
-    .stat-label {
+    .compare-card.with {
+      background: var(--teal-light);
+      border-color: var(--teal-mid);
+    }
+
+    .compare-card h3 {
       font-size: 14px;
-      color: var(--zinc);
-      line-height: 1.5;
-    }
-
-    /* ── Before/After ── */
-    .compare {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2px;
-      margin-top: 48px;
-    }
-
-    .compare-side {
-      padding: 36px 28px;
-      background: rgba(255,255,255,0.02);
-      border: 1px solid var(--rule);
-    }
-    .compare-side:first-child { border-radius: 8px 0 0 8px; }
-    .compare-side:last-child { border-radius: 0 8px 8px 0; }
-
-    .compare-label {
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.08em;
+      font-weight: 700;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
       margin-bottom: 20px;
     }
-    .compare-side:first-child .compare-label { color: var(--deny); }
-    .compare-side:last-child .compare-label { color: var(--allow); }
+
+    .compare-card.without h3 { color: var(--gray-400); }
+    .compare-card.with h3 { color: var(--teal); }
 
     .compare-item {
       display: flex;
       align-items: flex-start;
       gap: 10px;
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--gray-700);
+      margin-bottom: 14px;
+    }
+
+    .compare-item:last-child { margin-bottom: 0; }
+
+    .compare-icon {
+      flex-shrink: 0;
+      margin-top: 3px;
       font-size: 14px;
-      line-height: 1.6;
-      color: var(--zinc);
-      margin-bottom: 12px;
-    }
-
-    .compare-icon { flex-shrink: 0; margin-top: 3px; font-size: 13px; }
-    .compare-side:first-child .compare-icon { color: var(--deny); }
-    .compare-side:last-child .compare-icon { color: var(--allow); }
-
-    /* ── Steps ── */
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1px;
-      margin-top: 56px;
-      background: var(--rule);
-      border: 1px solid var(--rule);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    .step-card {
-      padding: 32px 24px;
-      background: var(--void);
-      transition: background 0.2s;
-    }
-    .step-card:hover { background: rgba(255,255,255,0.02); }
-
-    .step-num {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--seal);
-      letter-spacing: 0.06em;
-      margin-bottom: 12px;
-    }
-
-    .step-name {
-      font-size: 17px;
       font-weight: 700;
-      margin-bottom: 8px;
     }
 
-    .step-desc {
-      font-size: 13px;
-      color: var(--zinc);
-      line-height: 1.6;
-    }
+    .compare-card.without .compare-icon { color: var(--deny); }
+    .compare-card.with .compare-icon { color: var(--teal); }
 
-    /* ── Verbs ── */
-    .verbs {
+    /* ── How It Works ── */
+    .verbs-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 1px;
+      gap: 24px;
       margin-top: 56px;
-      background: var(--rule);
-      border: 1px solid var(--rule);
-      border-radius: 8px;
-      overflow: hidden;
     }
 
     .verb-card {
-      padding: 32px 24px;
-      background: var(--void);
-      transition: background 0.2s;
+      padding: 32px;
+      border-radius: 16px;
+      border: 1px solid var(--gray-200);
+      background: var(--white);
       display: flex;
       flex-direction: column;
+      transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
     }
-    .verb-card:hover { background: rgba(255,255,255,0.02); }
+
+    .verb-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.06);
+      border-color: var(--teal-mid);
+    }
+
+    .verb-num {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--teal-mid);
+      line-height: 1;
+      margin-bottom: 16px;
+    }
 
     .verb-name {
-      font-family: var(--sans);
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 6px;
-      color: var(--seal);
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--black);
+      margin-bottom: 8px;
     }
 
     .verb-desc {
       font-size: 14px;
-      color: var(--zinc);
       line-height: 1.6;
-      margin-bottom: 18px;
-      flex: 1;
+      color: var(--gray-500);
+      margin-bottom: 20px;
     }
 
     .verb-code {
       font-family: var(--mono);
       font-size: 12px;
-      line-height: 1.8;
-      padding: 14px;
-      background: rgba(255,255,255,0.03);
-      border-radius: 6px;
+      line-height: 1.7;
+      padding: 16px;
+      border-radius: 10px;
+      background: var(--gray-900);
+      color: #E5E5E5;
       overflow-x: auto;
+      min-height: 132px;
+      margin-top: auto;
     }
 
-    /* ── Flow ── */
-    .flow {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
+    .verb-code .kw { color: #C084FC; }
+    .verb-code .fn { color: #67E8F9; }
+    .verb-code .str { color: #86EFAC; }
+    .verb-code .num { color: #FDE68A; }
+    .verb-code .cmt { color: #6B7280; }
+
+    /* ── Audit Section ── */
+    .audit-table {
       margin-top: 56px;
-      flex-wrap: wrap;
+      border: 1px solid var(--gray-200);
+      border-radius: 16px;
+      overflow: hidden;
     }
 
-    .flow-step {
-      padding: 18px 24px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--rule);
-      border-radius: 8px;
-      text-align: center;
-      min-width: 140px;
-      transition: border-color 0.2s;
+    .audit-thead {
+      display: grid;
+      grid-template-columns: 56px 1fr 140px 100px 1fr;
+      padding: 12px 24px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
     }
-    .flow-step:hover { border-color: rgba(255,255,255,0.15); }
 
-    .flow-step-label {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--muted);
+    .audit-th {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 6px;
+      color: var(--gray-400);
     }
 
-    .flow-step-name {
-      font-weight: 600;
-      font-size: 15px;
+    .audit-row {
+      display: grid;
+      grid-template-columns: 56px 1fr 140px 100px 1fr;
+      padding: 14px 24px;
+      align-items: center;
+      border-bottom: 1px solid var(--gray-100);
+      transition: background 0.15s, transform 0.15s;
     }
 
-    .flow-arrow {
-      color: var(--muted);
-      font-size: 18px;
-    }
+    .audit-row:last-child { border-bottom: none; }
+    .audit-row:hover { background: var(--gray-50); }
+
+    .audit-cell { font-size: 13px; color: var(--gray-700); }
+    .audit-cell.mono { font-family: var(--mono); font-size: 12px; }
+    .audit-cell.muted { color: var(--gray-400); font-size: 12px; }
+
+    .audit-status { font-weight: 700; font-size: 15px; }
+    .audit-status.allow { color: var(--allow); }
+    .audit-status.deny { color: var(--deny); }
 
     /* ── Integrations ── */
     .int-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 1px;
+      gap: 16px;
       margin-top: 56px;
-      background: var(--rule);
-      border: 1px solid var(--rule);
-      border-radius: 8px;
     }
-    .int-card:first-child { border-radius: 8px 0 0 0; }
-    .int-card:nth-child(4) { border-radius: 0 8px 0 0; }
-    .int-card:nth-child(5) { border-radius: 0 0 0 8px; }
-    .int-card:last-child { border-radius: 0 0 8px 0; }
 
     .int-card {
-      padding: 28px 22px;
-      background: var(--void);
-      transition: background 0.2s;
-      position: relative;
-      cursor: default;
-    }
-    .int-card:hover { background: rgba(255,255,255,0.02); }
-
-    .int-name { font-size: 16px; font-weight: 600; margin-bottom: 6px; color: var(--seal); }
-    .int-desc { font-size: 13px; color: var(--zinc); line-height: 1.5; margin-bottom: 12px; }
-    .int-code { font-family: var(--mono); font-size: 11px; color: var(--muted); }
-    .int-hover-hint { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 8px; opacity: 0.5; }
-
-    .int-tooltip {
-      display: none;
-      position: absolute;
-      bottom: calc(100% + 10px);
-      left: 0;
-      transform: none;
-      width: 340px;
-      padding: 16px 18px;
-      background: #18181b;
-      border: 1px solid rgba(234,179,8,0.2);
-      border-radius: 8px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
-      z-index: 20;
-      font-family: var(--mono);
-      font-size: 12px;
-      line-height: 1.7;
-      color: var(--bone);
-      pointer-events: none;
-    }
-    .int-tooltip::after {
-      content: '';
-      position: absolute;
-      top: 100%;
-      left: 40px;
-      transform: none;
-      border: 6px solid transparent;
-      border-top-color: rgba(234,179,8,0.2);
-    }
-    .int-card:hover .int-tooltip { display: block; }
-    .int-card.tip-below .int-tooltip {
-      bottom: auto;
-      top: calc(100% + 10px);
-      left: 0;
-      transform: none;
-    }
-    .int-card.tip-below .int-tooltip::after {
-      top: auto;
-      bottom: 100%;
-      left: 40px;
-      transform: none;
-      border-top-color: transparent;
-      border-bottom-color: rgba(234,179,8,0.2);
-    }
-
-    .tt-kw { color: #c4b5fd; }
-    .tt-fn { color: #93c5fd; }
-    .tt-str { color: #86efac; }
-    .tt-cmt { color: var(--muted); }
-
-    /* ── FAQ ── */
-    .faq-list { margin-top: 40px; }
-
-    .faq-item {
-      border-bottom: 1px solid var(--rule);
-      padding: 24px 0;
-    }
-    .faq-item:first-child { border-top: 1px solid var(--rule); }
-
-    .faq-q {
-      font-size: 16px;
-      font-weight: 600;
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid var(--gray-200);
       cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+      position: relative;
+    }
+
+    .int-card:hover {
+      border-color: var(--teal-mid);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+      transform: translateY(-2px);
+    }
+
+    .int-card.active {
+      border-color: var(--teal);
+      box-shadow: 0 4px 16px rgba(13,148,136,0.12);
+    }
+
+    .int-card-head {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      gap: 16px;
-      user-select: none;
-      transition: color 0.15s;
+      gap: 10px;
+      margin-bottom: 6px;
     }
-    .faq-q:hover { color: var(--seal); }
 
-    .faq-arrow {
-      flex-shrink: 0;
-      font-size: 14px;
-      color: var(--muted);
-      transition: transform 0.2s;
+    .int-card-head .shield-icon {
+      color: var(--teal);
+      opacity: 0.5;
+      transition: opacity 0.2s;
     }
-    .faq-item.open .faq-arrow { transform: rotate(45deg); color: var(--seal); }
 
-    .faq-a {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s ease, padding 0.3s ease;
+    .int-card:hover .shield-icon { opacity: 1; }
+
+    .int-name {
       font-size: 15px;
-      color: var(--zinc);
-      line-height: 1.7;
-    }
-    .faq-item.open .faq-a {
-      max-height: 600px;
-      padding-top: 14px;
-    }
-    .faq-a code {
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--seal);
-      background: rgba(234,179,8,0.08);
-      padding: 2px 6px;
-      border-radius: 3px;
+      font-weight: 700;
+      color: var(--black);
     }
 
-    /* ── Security ── */
-    .sec-table {
-      width: 100%;
-      margin-top: 56px;
-      border-collapse: collapse;
-    }
-
-    .sec-table th {
+    .int-pkg {
       font-family: var(--mono);
       font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-      text-align: left;
-      padding: 12px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.12);
+      color: var(--gray-400);
+      margin-bottom: 10px;
     }
 
-    .sec-table td {
-      padding: 14px 0;
-      border-bottom: 1px solid var(--rule);
+    .int-desc {
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--gray-500);
+    }
+
+    .int-expand {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--teal);
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .int-card:hover .int-expand { opacity: 1; }
+
+    /* Integration Detail Panel */
+    .int-detail {
+      display: none;
+      grid-column: 1 / -1;
+      background: var(--gray-50);
+      border: 1px solid var(--teal-mid);
+      border-radius: 12px;
+      padding: 28px 32px;
+      animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .int-detail.active { display: block; }
+
+    @keyframes slideDown {
+      0% { opacity: 0; transform: translateY(-8px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .int-detail-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .int-detail-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .int-detail-title h4 {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .int-detail-close {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      border: 1px solid var(--gray-200);
+      background: var(--white);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 14px;
-      vertical-align: top;
+      color: var(--gray-400);
+      transition: background 0.15s, color 0.15s;
     }
 
-    .sec-table tr { transition: background 0.15s; }
-    .sec-table tbody tr:hover { background: rgba(255,255,255,0.02); }
-    .sec-table td:first-child { font-weight: 600; padding-right: 40px; white-space: nowrap; }
-    .sec-table td:last-child { color: var(--zinc); }
-    .sec-check { color: var(--seal); margin-right: 8px; }
+    .int-detail-close:hover { background: var(--gray-100); color: var(--black); }
 
-    /* ── Packages ── */
-    .pkg-grid {
+    .int-detail-body {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1px;
-      margin-top: 56px;
-      background: var(--rule);
-      border: 1px solid var(--rule);
-      border-radius: 8px;
-      overflow: hidden;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
     }
 
-    .pkg-card {
-      padding: 24px 20px;
-      background: var(--void);
-      transition: background 0.2s;
+    .int-detail-info p {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--gray-500);
+      margin-bottom: 12px;
     }
-    .pkg-card:hover { background: rgba(255,255,255,0.02); }
 
-    .pkg-name {
+    .int-detail-install {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       font-family: var(--mono);
       font-size: 12px;
-      color: var(--link);
-      margin-bottom: 6px;
-      word-break: break-all;
+      padding: 8px 14px;
+      background: var(--gray-900);
+      color: #E5E5E5;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity 0.15s;
     }
 
-    .pkg-desc { font-size: 13px; color: var(--zinc); line-height: 1.5; }
+    .int-detail-install:hover { opacity: 0.85; }
+    .int-detail-install .d { color: var(--teal); }
+
+    .int-detail-code {
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.7;
+      padding: 16px;
+      border-radius: 10px;
+      background: var(--gray-900);
+      color: #E5E5E5;
+      overflow-x: auto;
+    }
+
+    .int-detail-code .kw { color: #C084FC; }
+    .int-detail-code .fn { color: #67E8F9; }
+    .int-detail-code .str { color: #86EFAC; }
 
     /* ── CTA ── */
-    .cta { padding: 140px 0; text-align: center; }
-
-    .cta-title {
-      font-family: var(--sans);
-      font-size: clamp(26px, 4vw, 42px);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin-bottom: 14px;
+    .cta-section {
+      position: relative;
+      z-index: 1;
+      padding: 120px 40px;
+      text-align: center;
+      max-width: 1200px;
+      margin: 0 auto;
     }
 
-    .cta-desc { font-size: 16px; color: var(--zinc); margin-bottom: 36px; }
+    .cta-shield {
+      margin-bottom: 24px;
+      animation: floatShield 4s ease-in-out infinite;
+    }
+
+    @keyframes floatShield {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .cta-title {
+      font-size: clamp(28px, 3.5vw, 42px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--black);
+    }
+
+    .cta-title span { font-weight: 300; color: var(--gray-400); }
+
+    .cta-desc {
+      font-size: 17px;
+      color: var(--gray-500);
+      margin-top: 16px;
+    }
 
     .cta-install {
       display: inline-flex;
       align-items: center;
       gap: 12px;
-      padding: 16px 32px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 8px;
+      margin-top: 32px;
+      padding: 14px 24px;
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
       font-family: var(--mono);
-      font-size: 15px;
-      color: var(--bone);
+      font-size: 14px;
+      color: var(--gray-700);
       cursor: pointer;
-      transition: all 0.2s;
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+      background: var(--white);
     }
-    .cta-install:hover { border-color: rgba(255,255,255,0.25); box-shadow: 0 0 30px rgba(255,255,255,0.05); }
-    .cta-install .dollar { color: var(--allow); }
+
+    .cta-install:hover { border-color: var(--gray-400); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    .cta-install .dollar { color: var(--teal); font-weight: 600; }
 
     .cta-links {
-      margin-top: 24px;
       display: flex;
-      gap: 24px;
       justify-content: center;
+      gap: 32px;
+      margin-top: 24px;
     }
+
     .cta-links a {
       font-size: 14px;
-      color: var(--zinc);
+      font-weight: 500;
+      color: var(--gray-400);
       text-decoration: none;
       transition: color 0.2s;
     }
-    .cta-links a:hover { color: var(--bone); }
 
-    /* ── Audit Viz ── */
-    .audit-viz {
-      margin-top: 48px;
-      border: 1px solid var(--rule);
-      border-radius: 10px;
-      overflow: hidden;
-      font-family: var(--mono);
-      font-size: 13px;
-    }
-
-    .audit-header {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      padding: 12px 20px;
-      background: rgba(255,255,255,0.03);
-      border-bottom: 1px solid var(--rule);
-    }
-
-    .audit-header-cell {
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .audit-row {
-      display: flex;
-      align-items: center;
-      padding: 10px 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-      transition: background 0.15s;
-    }
-
-    .audit-row:last-child { border-bottom: none; }
-    .audit-row:hover { background: rgba(255,255,255,0.02); }
-
-    .audit-status { width: 60px; font-weight: 600; font-size: 14px; }
-    .audit-allow { color: var(--allow); }
-    .audit-deny { color: var(--deny); }
-    .audit-action { flex: 1; color: var(--bone); }
-    .audit-agent { width: 140px; color: var(--zinc); }
-    .audit-time { width: 130px; color: var(--muted); font-size: 12px; }
-    .audit-reason { flex: 1; color: var(--muted); font-size: 12px; }
-
-    .audit-stats {
-      display: flex;
-      justify-content: center;
-      gap: 60px;
-      margin-top: 48px;
-    }
-
-    .audit-stat { text-align: center; }
-    .audit-stat-num { font-family: var(--sans); font-size: 36px; font-weight: 700; }
-    .audit-stat-label { font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 6px; }
+    .cta-links a:hover { color: var(--black); }
 
     /* ── Footer ── */
     footer {
-      padding: 28px 0;
-      border-top: 1px solid var(--rule);
-    }
-
-    footer .section-inner {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--gray-200);
+      padding: 28px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    footer p { font-size: 13px; color: var(--muted); }
+    footer p { font-size: 13px; color: var(--gray-400); }
 
-    .footer-links { display: flex; gap: 24px; list-style: none; }
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      list-style: none;
+    }
+
     .footer-links a {
       font-size: 13px;
-      color: var(--muted);
+      color: var(--gray-400);
       text-decoration: none;
       transition: color 0.2s;
     }
-    .footer-links a:hover { color: var(--bone); }
+
+    .footer-links a:hover { color: var(--black); }
 
     /* ── Responsive ── */
-    @media (max-width: 768px) {
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; gap: 48px; padding: 140px 24px 80px; }
+      .compare-grid { grid-template-columns: 1fr; }
+      .verbs-grid { grid-template-columns: 1fr; }
+      .int-grid { grid-template-columns: 1fr 1fr; }
+      .int-detail-body { grid-template-columns: 1fr; }
+      .section { padding: 80px 24px; }
+      .cta-section { padding: 80px 24px; }
+      .nav { padding: 14px 20px; }
       .nav-links { display: none; }
-      .compare { grid-template-columns: 1fr; }
-      .compare-side:first-child { border-radius: 8px 8px 0 0; }
-      .compare-side:last-child { border-radius: 0 0 8px 8px; }
-      .verbs { grid-template-columns: 1fr; }
-      .int-grid, .pkg-grid { grid-template-columns: 1fr 1fr; }
-      .stats { grid-template-columns: 1fr; }
-      .steps { grid-template-columns: 1fr 1fr; }
-      .terminal-body { font-size: 11px; padding: 14px 16px; }
-      .try-section { padding: 0 16px 16px; }
-      .flow { flex-direction: column; }
-      .flow-arrow { transform: rotate(90deg); }
-      .audit-header { display: none; }
-      .audit-row { flex-wrap: wrap; gap: 4px 12px; padding: 12px 16px; }
-      .audit-status { width: 24px; }
-      .audit-action { flex: none; width: auto; }
-      .audit-agent { width: auto; }
-      .audit-time { width: auto; }
-      .audit-reason { flex: none; width: 100%; padding-left: 36px; }
-      .audit-stats { gap: 32px; flex-wrap: wrap; }
+      footer { padding: 24px 20px; }
+      .audit-thead { display: none; }
+      .audit-row { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 14px 20px; }
+      .passport-visual { min-height: auto; }
     }
 
-    @media (max-width: 480px) {
-      .int-grid, .pkg-grid { grid-template-columns: 1fr; }
+    @media (max-width: 500px) {
+      .int-grid { grid-template-columns: 1fr; }
+      .hero-actions { flex-direction: column; align-items: flex-start; }
+      .chain-flow { flex-wrap: wrap; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -946,600 +989,727 @@
         animation-duration: 0.01ms !important;
         transition-duration: 0.01ms !important;
       }
+      #dotCanvas, #introOverlay { display: none; }
     }
   </style>
 </head>
 <body>
 
-  <div class="page">
-
-    <nav class="nav">
-      <a href="#" class="nav-mark">
-        <svg class="nav-shield" viewBox="-7 -9.5 14 15" fill="none">
-          <path d="M0,-8.5 C1.2,-8.5 6,-6.8 6,-3.4 L6,0 C3.6,1.275 1.2,3.4 0,4.25 C-1.2,3.4 -3.6,1.275 -6,0 L-6,-3.4 C-6,-6.8 -1.2,-8.5 0,-8.5Z" stroke="#eab308" stroke-width="0.8" fill="none"/>
-          <path d="M0,-5.8 C0.8,-5.8 4,-4.64 4,-2.32 L4,0 C2.4,0.87 0.8,2.32 0,2.9 C-0.8,2.32 -2.4,0.87 -4,0 L-4,-2.32 C-4,-4.64 -0.8,-5.8 0,-5.8Z" stroke="#eab308" stroke-width="0.5" stroke-opacity="0.4" fill="none"/>
-        </svg>
-        Agent Passport
-      </a>
-      <ul class="nav-links">
-        <li><a href="#problem">Problem</a></li>
-        <li><a href="#how">How it works</a></li>
-        <li><a href="#integrations">Integrations</a></li>
-        <li><a href="#audit">Audit</a></li>
-        <li><a href="#security">Security</a></li>
-        <li><a href="https://github.com/priyansh-x/agent-passport" target="_blank" rel="noopener">GitHub</a></li>
-      </ul>
-    </nav>
-
-    <!-- ════ Hero ════ -->
-    <section class="hero">
-      <div class="hero-label">Open protocol for agent authorization</div>
-      <h1>Every agent gets a <span class="hl">passport</span> before it acts</h1>
-      <div class="terminal-wrap">
-        <div class="terminal" id="terminal">
-          <div class="terminal-bar">
-            <div class="terminal-dot"></div>
-            <div class="terminal-dot"></div>
-            <div class="terminal-dot"></div>
-            <span class="terminal-title">passport — booking-bot</span>
-          </div>
-
-          <div class="terminal-body">
-            <div class="passport-card">
-              <div><span class="t-seal">⬡</span> <span class="t-seal">Passport</span> <span class="t-dim">pp_7f3a…c91d</span> · <span class="t-prop">booking-bot</span></div>
-              <div><span class="t-dim">scope</span> <span class="t-str">calendar:read</span> <span class="t-str">calendar:write</span> <span class="t-str">email:send</span> · <span class="t-dim">budget</span> <span class="t-num">$500</span> · <span class="t-dim">ttl</span> 24h</div>
-            </div>
-          </div>
-
-          <div class="terminal-divider"></div>
-
-          <div class="try-section">
-            <div class="try-label">Try it yourself</div>
-            <div class="try-chips">
-              <button class="try-chip" data-action="calendar:read" data-allowed="true">calendar:read</button>
-              <button class="try-chip" data-action="calendar:write" data-allowed="true">calendar:write</button>
-              <button class="try-chip" data-action="email:send" data-allowed="true">email:send</button>
-              <button class="try-chip" data-action="database:drop" data-allowed="false">database:drop</button>
-              <button class="try-chip" data-action="admin:delete" data-allowed="false">admin:delete</button>
-              <button class="try-chip" data-action="payment:charge" data-allowed="false">payment:charge</button>
-            </div>
-            <div class="try-input-row">
-              <span class="try-prompt">passport.authorize("</span>
-              <input class="try-input" id="try-input" type="text" placeholder="type any action..." autocomplete="off" spellcheck="false" />
-              <span class="try-prompt">")</span>
-            </div>
-            <div class="try-result" id="try-result"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="hero-cta">
-        <a href="https://github.com/priyansh-x/agent-passport" class="btn btn-primary" target="_blank" rel="noopener">View on GitHub</a>
-        <a href="#how" class="btn btn-ghost">How it works</a>
-      </div>
-      <div class="install-cmd" id="install-cmd" onclick="copyInstall()">
-        <span class="dollar">$</span>
-        <span id="install-text">npm install @passport-agent/sdk</span>
-        <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-      </div>
-    </section>
-
-    <!-- ════ Problem ════ -->
-    <div class="section" id="problem">
-      <div class="section-inner">
-        <div class="section-tag reveal">The problem</div>
-        <h2 class="section-title reveal">AI agents act on your behalf with zero guardrails</h2>
-        <p class="section-desc reveal">Identity protocols say who an agent is. Nothing says what it's allowed to do, how much it can spend, or when to cut it off.</p>
-
-        <div class="stats reveal">
-          <div class="stat">
-            <div class="stat-num">97<span class="pct">%</span></div>
-            <div class="stat-label">of deployed agents are over-permissioned</div>
-          </div>
-          <div class="stat">
-            <div class="stat-num">53<span class="pct">%</span></div>
-            <div class="stat-label">use static API keys from human credentials</div>
-          </div>
-          <div class="stat">
-            <div class="stat-num">0<span class="pct"></span></div>
-            <div class="stat-label">standards for agent-to-agent delegation</div>
-          </div>
-        </div>
-
-        <div class="compare reveal">
-          <div class="compare-side">
-            <div class="compare-label">Without passport</div>
-            <div class="compare-item"><span class="compare-icon">✗</span> Full account access, no scoping</div>
-            <div class="compare-item"><span class="compare-icon">✗</span> No spend limits — agents drain budgets</div>
-            <div class="compare-item"><span class="compare-icon">✗</span> Revocation means rotating all keys</div>
-            <div class="compare-item"><span class="compare-icon">✗</span> Agent delegation? Just vibes and trust</div>
-          </div>
-          <div class="compare-side">
-            <div class="compare-label">With passport</div>
-            <div class="compare-item"><span class="compare-icon">✓</span> Scoped permissions per agent, per task</div>
-            <div class="compare-item"><span class="compare-icon">✓</span> Budget caps with server-side tracking</div>
-            <div class="compare-item"><span class="compare-icon">✓</span> Instant revocation cascades to sub-agents</div>
-            <div class="compare-item"><span class="compare-icon">✓</span> Delegation chains that only narrow</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════ How it works ════ -->
-    <div class="section" id="how">
-      <div class="section-inner">
-        <div class="section-tag reveal">How it works</div>
-        <h2 class="section-title reveal">Three verbs. That's the whole API.</h2>
-        <p class="section-desc reveal">Issue a passport, authorize actions against it, delegate to sub-agents with narrower scope.</p>
-
-        <div class="steps reveal">
-          <div class="step-card">
-            <div class="step-num">I</div>
-            <div class="step-name">Human delegates</div>
-            <div class="step-desc">"Book me a flight under $500" — intent becomes a scoped passport.</div>
-          </div>
-          <div class="step-card">
-            <div class="step-num">II</div>
-            <div class="step-name">Passport issued</div>
-            <div class="step-desc">Ed25519-signed token with permissions, budget, and TTL baked in.</div>
-          </div>
-          <div class="step-card">
-            <div class="step-num">III</div>
-            <div class="step-name">Every action checked</div>
-            <div class="step-desc">Before each tool call, authorize() runs the action against the policy engine.</div>
-          </div>
-          <div class="step-card">
-            <div class="step-num">IV</div>
-            <div class="step-name">Deny or allow</div>
-            <div class="step-desc">Out of scope? Over budget? Expired? Denied. Everything is logged to the audit trail.</div>
-          </div>
-        </div>
-
-        <div class="verbs reveal">
-          <div class="verb-card">
-            <div class="verb-name">Issue</div>
-            <div class="verb-desc">Create a signed passport scoped to specific actions, budgets, and time windows.</div>
-            <div class="verb-code">
-              <span class="t-kw">const</span> <span class="t-prop">passport</span> = AgentPassport.<span class="t-fn">issue</span>({<br>
-              &nbsp;&nbsp;<span class="t-prop">agent</span>: <span class="t-str">"booking-bot"</span>,<br>
-              &nbsp;&nbsp;<span class="t-prop">permissions</span>: [<span class="t-str">"calendar:*"</span>],<br>
-              &nbsp;&nbsp;<span class="t-prop">limits</span>: { <span class="t-prop">maxSpend</span>: <span class="t-num">500</span> },<br>
-              })
-            </div>
-          </div>
-          <div class="verb-card">
-            <div class="verb-name">Authorize</div>
-            <div class="verb-desc">Check every action before executing. Allowed or denied — every call is logged.</div>
-            <div class="verb-code">
-              passport.<span class="t-fn">authorize</span>(<span class="t-str">"calendar:write"</span>)<br>
-              <span class="t-cmt">// → ✓ allowed</span><br><br>
-              passport.<span class="t-fn">authorize</span>(<span class="t-str">"database:drop"</span>)<br>
-              <span class="t-cmt">// → ✗ denied</span>
-            </div>
-          </div>
-          <div class="verb-card">
-            <div class="verb-name">Delegate</div>
-            <div class="verb-desc">Hand a narrower passport to a sub-agent. Permissions only shrink, never grow.</div>
-            <div class="verb-code">
-              <span class="t-kw">const</span> <span class="t-prop">child</span> = passport.<span class="t-fn">delegate</span>({<br>
-              &nbsp;&nbsp;<span class="t-prop">agent</span>: <span class="t-str">"email-drafter"</span>,<br>
-              &nbsp;&nbsp;<span class="t-prop">permissions</span>: [<span class="t-str">"email:send"</span>],<br>
-              })
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════ Integrations ════ -->
-    <div class="section" id="integrations">
-      <div class="section-inner">
-        <div class="section-tag reveal">Integrations</div>
-        <h2 class="section-title reveal">Drops into what you already use</h2>
-        <p class="section-desc reveal">Framework bindings that make passport checks invisible to your application code.</p>
-
-        <div class="int-grid reveal">
-          <div class="int-card">
-            <div class="int-name">MCP</div>
-            <div class="int-desc">Passport-protect every tool call in your MCP server.</div>
-            <div class="int-code">@passport-agent/mcp</div>
-            <div class="int-hover-hint">hover for example</div>
-            <div class="int-tooltip"><span class="tt-kw">const</span> guard = <span class="tt-kw">new</span> PassportToolGuard({ issuer })<br><br><span class="tt-cmt">// guards tool execution</span><br>guard.<span class="tt-fn">guard</span>(passport, <span class="tt-str">"send_email"</span>)<br><span class="tt-cmt">// → ✓ allowed or ✗ denied</span></div>
-          </div>
-          <div class="int-card">
-            <div class="int-name">Express</div>
-            <div class="int-desc">Middleware that maps routes to permissions automatically.</div>
-            <div class="int-code">@passport-agent/middleware</div>
-            <div class="int-hover-hint">hover for example</div>
-            <div class="int-tooltip">app.<span class="tt-fn">use</span>(<span class="tt-fn">createPassportMiddleware</span>({ issuer }))<br><br><span class="tt-cmt">// POST /api/calendar → "api:calendar:post"</span><br><span class="tt-cmt">// passport checked automatically</span><br><span class="tt-cmt">// 401 if missing, 403 if denied</span></div>
-          </div>
-          <div class="int-card">
-            <div class="int-name">LangChain</div>
-            <div class="int-desc">Wrap any tool with passport authorization in one line.</div>
-            <div class="int-code">@passport-agent/langchain</div>
-            <div class="int-hover-hint">hover for example</div>
-            <div class="int-tooltip"><span class="tt-kw">const</span> safe = <span class="tt-fn">withPassport</span>(emailTool, passport, {<br>&nbsp;&nbsp;permission: <span class="tt-str">"email:send"</span>,<br>&nbsp;&nbsp;spend: <span class="tt-str">0.50</span>&nbsp;&nbsp;<span class="tt-cmt">// costs 50¢ per call</span><br>})<br><span class="tt-cmt">// tool now checks passport before running</span></div>
-          </div>
-          <div class="int-card">
-            <div class="int-name">CrewAI</div>
-            <div class="int-desc">Decorator that guards all tool calls on an agent.</div>
-            <div class="int-code">@passport-agent/crewai</div>
-            <div class="int-hover-hint">hover for example</div>
-            <div class="int-tooltip"><span class="tt-kw">const</span> agent = <span class="tt-kw">new</span> <span class="tt-fn">PassportAgent</span>(passport)<br><br>agent.<span class="tt-fn">execute</span>({<br>&nbsp;&nbsp;task: <span class="tt-str">"draft outreach"</span>,<br>&nbsp;&nbsp;requiredPermission: <span class="tt-str">"email:send"</span>,<br>})<br><span class="tt-cmt">// denied tasks fail gracefully</span></div>
-          </div>
-          <div class="int-card tip-below">
-            <div class="int-name">Fastify</div>
-            <div class="int-desc">Plugin with automatic action extraction from routes.</div>
-            <div class="int-code">@passport-agent/middleware</div>
-            <div class="int-hover-hint">hover for example</div>
-            <div class="int-tooltip">fastify.<span class="tt-fn">register</span>(passportPlugin, { issuer })<br><br><span class="tt-cmt">// GET /users → "users:get"</span><br><span class="tt-cmt">// auto-extracts action from method + path</span><br><span class="tt-cmt">// attaches context to request</span></div>
-          </div>
-          <div class="int-card tip-below">
-            <div class="int-name">Next.js</div>
-            <div class="int-desc">API route middleware for server actions and edge.</div>
-            <div class="int-code">@passport-agent/middleware</div>
-            <div class="int-hover-hint">hover for example</div>
-            <div class="int-tooltip"><span class="tt-kw">export</span> <span class="tt-kw">const</span> POST = <span class="tt-fn">withPassport</span>(handler, {<br>&nbsp;&nbsp;issuer,<br>&nbsp;&nbsp;action: <span class="tt-str">"api:users:create"</span>,<br>})<br><span class="tt-cmt">// works with App Router + Edge</span></div>
-          </div>
-          <div class="int-card tip-below">
-            <div class="int-name">A2A</div>
-            <div class="int-desc">Agent Card extensions for cross-agent authorization.</div>
-            <div class="int-code">@passport-agent/a2a</div>
-            <div class="int-hover-hint">hover for example</div>
-            <div class="int-tooltip"><span class="tt-kw">const</span> card = {<br>&nbsp;&nbsp;passportRequirements: {<br>&nbsp;&nbsp;&nbsp;&nbsp;requiredPermissions: [<span class="tt-str">"search:*"</span>],<br>&nbsp;&nbsp;&nbsp;&nbsp;minSpendLimit: <span class="tt-str">100</span>,<br>&nbsp;&nbsp;}<br>}<br><span class="tt-cmt">// validates passport before agent-to-agent calls</span></div>
-          </div>
-          <div class="int-card tip-below">
-            <div class="int-name">Authority Server</div>
-            <div class="int-desc">Self-hosted REST API with SQLite, audit logs, dashboard.</div>
-            <div class="int-code">@passport-agent/server</div>
-            <div class="int-hover-hint">hover for example</div>
-            <div class="int-tooltip">$ npx @passport-agent/server<br><br><span class="tt-cmt">// REST endpoints:</span><br>POST /v1/passports&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tt-cmt">// issue</span><br>POST /v1/passports/:id/authorize<br>POST /v1/passports/:id/revoke<br>GET&nbsp;&nbsp;/v1/passports/:id/audit</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════ Security ════ -->
-    <div class="section" id="security">
-      <div class="section-inner">
-        <div class="section-tag reveal">Security model</div>
-        <h2 class="section-title reveal">Guarantees, not guidelines</h2>
-        <p class="section-desc reveal">Every property is enforced cryptographically or at the protocol level.</p>
-
-        <table class="sec-table reveal">
-          <thead>
-            <tr><th>Property</th><th>How it's enforced</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><span class="sec-check">✓</span> Tamper-proof</td><td>Ed25519 signatures verified on every authorize() call</td></tr>
-            <tr><td><span class="sec-check">✓</span> No escalation</td><td>Delegation only narrows permissions — enforced by policy engine + Datalog</td></tr>
-            <tr><td><span class="sec-check">✓</span> Cascade revocation</td><td>Revoking a parent kills the entire delegation subtree</td></tr>
-            <tr><td><span class="sec-check">✓</span> Replay protection</td><td>128-bit cryptographic nonce per passport</td></tr>
-            <tr><td><span class="sec-check">✓</span> Budget enforcement</td><td>Server-side spend tracking — clients can't lie about spending</td></tr>
-            <tr><td><span class="sec-check">✓</span> Time-bound</td><td>Automatic expiration — child can never outlive parent</td></tr>
-            <tr><td><span class="sec-check">✓</span> Full audit trail</td><td>Every action logged — who, what, when, allowed or denied, and why</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ════ Audit Trail ════ -->
-    <div class="section" id="audit">
-      <div class="section-inner">
-        <div class="section-tag reveal">Audit trail</div>
-        <h2 class="section-title reveal">Know exactly what your agents did</h2>
-        <p class="section-desc reveal">Every authorize() call is logged — allowed or denied. Persisted in SQLite, queryable by passport ID. Compliance-ready out of the box.</p>
-
-        <div class="audit-viz reveal">
-          <div class="audit-header">
-            <span class="audit-header-cell" style="width:60px">Status</span>
-            <span class="audit-header-cell" style="flex:1">Action</span>
-            <span class="audit-header-cell" style="width:140px">Agent</span>
-            <span class="audit-header-cell" style="width:130px">Time</span>
-            <span class="audit-header-cell" style="flex:1">Reason</span>
-          </div>
-          <div class="audit-row">
-            <span class="audit-status audit-allow">✓</span>
-            <span class="audit-action">calendar:read</span>
-            <span class="audit-agent">booking-bot</span>
-            <span class="audit-time">14:23:01</span>
-            <span class="audit-reason">—</span>
-          </div>
-          <div class="audit-row">
-            <span class="audit-status audit-allow">✓</span>
-            <span class="audit-action">calendar:write</span>
-            <span class="audit-agent">booking-bot</span>
-            <span class="audit-time">14:23:04</span>
-            <span class="audit-reason">—</span>
-          </div>
-          <div class="audit-row">
-            <span class="audit-status audit-deny">✗</span>
-            <span class="audit-action">payment:charge</span>
-            <span class="audit-agent">booking-bot</span>
-            <span class="audit-time">14:23:08</span>
-            <span class="audit-reason">exceeds $500 budget</span>
-          </div>
-          <div class="audit-row">
-            <span class="audit-status audit-allow">✓</span>
-            <span class="audit-action">email:send</span>
-            <span class="audit-agent">email-drafter</span>
-            <span class="audit-time">14:23:12</span>
-            <span class="audit-reason">—</span>
-          </div>
-          <div class="audit-row">
-            <span class="audit-status audit-deny">✗</span>
-            <span class="audit-action">email:send</span>
-            <span class="audit-agent">email-drafter</span>
-            <span class="audit-time">14:23:15</span>
-            <span class="audit-reason">rate limit: 5/hour</span>
-          </div>
-          <div class="audit-row">
-            <span class="audit-status audit-deny">✗</span>
-            <span class="audit-action">database:drop</span>
-            <span class="audit-agent">booking-bot</span>
-            <span class="audit-time">14:23:19</span>
-            <span class="audit-reason">permission not granted</span>
-          </div>
-          <div class="audit-row">
-            <span class="audit-status audit-allow">✓</span>
-            <span class="audit-action">files:read</span>
-            <span class="audit-agent">research-agent</span>
-            <span class="audit-time">14:23:22</span>
-            <span class="audit-reason">—</span>
-          </div>
-        </div>
-
-        <div class="audit-stats reveal">
-          <div class="audit-stat">
-            <div class="audit-stat-num" style="color:var(--allow)">4</div>
-            <div class="audit-stat-label">Allowed</div>
-          </div>
-          <div class="audit-stat">
-            <div class="audit-stat-num" style="color:var(--deny)">3</div>
-            <div class="audit-stat-label">Denied</div>
-          </div>
-          <div class="audit-stat">
-            <div class="audit-stat-num" style="color:var(--seal)">3</div>
-            <div class="audit-stat-label">Agents</div>
-          </div>
-          <div class="audit-stat">
-            <div class="audit-stat-num" style="color:var(--zinc)">∞</div>
-            <div class="audit-stat-label">Retained</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════ Packages ════ -->
-    <div class="section" id="packages">
-      <div class="section-inner">
-        <div class="section-tag reveal">Packages</div>
-        <h2 class="section-title reveal">Eight packages, one protocol</h2>
-        <p class="section-desc reveal">Install only what you need. Everything works together.</p>
-
-        <div class="pkg-grid reveal">
-          <div class="pkg-card">
-            <div class="pkg-name">@passport-agent/core</div>
-            <div class="pkg-desc">Token creation, validation, policy engine, Biscuit support</div>
-          </div>
-          <div class="pkg-card">
-            <div class="pkg-name">@passport-agent/sdk</div>
-            <div class="pkg-desc">Developer-facing API — the main entry point</div>
-          </div>
-          <div class="pkg-card">
-            <div class="pkg-name">@passport-agent/server</div>
-            <div class="pkg-desc">Authority server with REST API, SQLite, dashboard</div>
-          </div>
-          <div class="pkg-card">
-            <div class="pkg-name">@passport-agent/mcp</div>
-            <div class="pkg-desc">MCP middleware for tool call authorization</div>
-          </div>
-          <div class="pkg-card">
-            <div class="pkg-name">@passport-agent/middleware</div>
-            <div class="pkg-desc">Express, Fastify, Next.js middleware</div>
-          </div>
-          <div class="pkg-card">
-            <div class="pkg-name">@passport-agent/langchain</div>
-            <div class="pkg-desc">LangChain tool wrapper</div>
-          </div>
-          <div class="pkg-card">
-            <div class="pkg-name">@passport-agent/crewai</div>
-            <div class="pkg-desc">CrewAI agent decorator</div>
-          </div>
-          <div class="pkg-card">
-            <div class="pkg-name">@passport-agent/a2a</div>
-            <div class="pkg-desc">A2A Agent Card extensions</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════ FAQ ════ -->
-    <div class="section" id="faq">
-      <div class="section-inner">
-        <div class="section-tag reveal">FAQ</div>
-        <h2 class="section-title reveal">Common questions</h2>
-
-        <div class="faq-list reveal">
-          <div class="faq-item">
-            <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
-              What stops an agent from removing the authorize() check from the code?
-              <span class="faq-arrow">+</span>
-            </div>
-            <div class="faq-a">
-              Agent Passport doesn't run inside the agent — it runs at the <strong>service boundary</strong>. The authorize() check lives in your server middleware, your MCP server, or your API gateway — code the agent never touches. The agent sends a request with its passport token in the header. Your server validates it. If the agent strips the passport or skips the header, your server returns 401 (unauthorized). It's the same pattern as OAuth: you don't trust the client to check its own permissions — the server enforces them. The agent can't "go into the code" because the enforcement code runs on infrastructure the agent doesn't control.
-            </div>
-          </div>
-          <div class="faq-item">
-            <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
-              How is this different from OAuth or API keys?
-              <span class="faq-arrow">+</span>
-            </div>
-            <div class="faq-a">
-              OAuth tells you <strong>who</strong> someone is. API keys prove <strong>identity</strong>. Neither tells you what the agent is allowed to do right now, how much it can spend, or when to cut it off. Agent Passport is the <strong>authorization</strong> layer — it sits on top of identity and adds scoped permissions, budget caps, time bounds, delegation chains, and cascade revocation. Think: OAuth says "this is booking-bot." Passport says "booking-bot can read calendars and spend up to $500 until midnight."
-            </div>
-          </div>
-          <div class="faq-item">
-            <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
-              What happens if an agent tries to escalate its own permissions?
-              <span class="faq-arrow">+</span>
-            </div>
-            <div class="faq-a">
-              It can't. The passport is signed with Ed25519 — changing any field (permissions, budget, expiry) breaks the cryptographic signature. The verification step catches it instantly. For delegation chains using Biscuit tokens, restrictions are appended cryptographically — you can only add constraints, never remove them. This is enforced at the protocol level, not application level.
-            </div>
-          </div>
-          <div class="faq-item">
-            <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
-              Can I use this without self-hosting?
-              <span class="faq-arrow">+</span>
-            </div>
-            <div class="faq-a">
-              Yes. The SDK works entirely locally for development — no server needed. <code>AgentPassport.issue()</code> and <code>passport.authorize()</code> run in-process. For production with persistent audit trails, spend tracking across restarts, and multi-service verification, you run the authority server (<code>npx @passport-agent/server</code>) — self-hosted on your infra. Hosted cloud authority is on the roadmap.
-            </div>
-          </div>
-          <div class="faq-item">
-            <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
-              What frameworks does it work with?
-              <span class="faq-arrow">+</span>
-            </div>
-            <div class="faq-a">
-              MCP (Model Context Protocol), Express, Fastify, Next.js, LangChain, CrewAI, and A2A (Agent-to-Agent protocol). Each has a dedicated package with framework-native bindings — middleware for HTTP frameworks, tool wrappers for agent frameworks, and Agent Card extensions for A2A. Hover over the integration cards above to see code examples.
-            </div>
-          </div>
-          <div class="faq-item">
-            <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
-              Is this open source? What's the license?
-              <span class="faq-arrow">+</span>
-            </div>
-            <div class="faq-a">
-              Fully open source under the MIT license. The protocol spec, all 8 packages, examples, and docs are on GitHub. We use an open RFC process for protocol changes — anyone can propose modifications.
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════ CTA ════ -->
-    <div class="cta">
-      <div class="section-inner">
-        <h2 class="cta-title reveal">Ten lines to production</h2>
-        <p class="cta-desc reveal">Open protocol. No vendor lock-in. Start locally, scale to hosted.</p>
-        <div class="cta-install reveal" onclick="copyInstall()">
-          <span class="dollar">$</span>
-          <span>npm install @passport-agent/sdk</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--muted)"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-        </div>
-        <div class="cta-links reveal">
-          <a href="https://github.com/priyansh-x/agent-passport" target="_blank" rel="noopener">GitHub</a>
-          <a href="https://www.npmjs.com/org/passport-agent" target="_blank" rel="noopener">npm</a>
-          <a href="https://github.com/priyansh-x/agent-passport/blob/main/docs/protocol-spec.md" target="_blank" rel="noopener">Protocol spec</a>
-        </div>
-      </div>
-    </div>
-
-    <footer>
-      <div class="section-inner">
-        <p>Agent Passport</p>
-        <ul class="footer-links">
-          <li><a href="https://github.com/priyansh-x/agent-passport" target="_blank" rel="noopener">GitHub</a></li>
-          <li><a href="https://www.npmjs.com/org/passport-agent" target="_blank" rel="noopener">npm</a></li>
-          <li><a href="https://github.com/priyansh-x/agent-passport/blob/main/docs/protocol-spec.md" target="_blank" rel="noopener">Spec</a></li>
-          <li><a href="/explain.html" style="color: var(--seal);">Explain it like I'm 5</a></li>
-        </ul>
-      </div>
-    </footer>
-
+  <!-- ═══ Intro Globe Animation ═══ -->
+  <div id="introOverlay">
+    <canvas id="introCanvas"></canvas>
   </div>
 
+  <!-- ═══ Interactive Dot Grid Background ═══ -->
+  <canvas id="dotCanvas"></canvas>
+
+  <!-- ═══ Nav ═══ -->
+  <nav class="nav" id="nav">
+    <a href="#" class="nav-brand">
+      <svg class="shield-logo" width="20" height="24" viewBox="-7 -9.5 14 15" fill="none">
+        <path d="M0,-8.5 C1.2,-8.5 6,-6.8 6,-3.4 L6,0 C3.6,1.275 1.2,3.4 0,4.25 C-1.2,3.4 -3.6,1.275 -6,0 L-6,-3.4 C-6,-6.8 -1.2,-8.5 0,-8.5Z" stroke="#0D9488" stroke-width="0.8" fill="none"/>
+        <path d="M0,-5.8 C0.8,-5.8 4,-4.64 4,-2.32 L4,0 C2.4,0.87 0.8,2.32 0,2.9 C-0.8,2.32 -2.4,0.87 -4,0 L-4,-2.32 C-4,-4.64 -0.8,-5.8 0,-5.8Z" stroke="#0D9488" stroke-width="0.5" stroke-opacity="0.4" fill="none"/>
+      </svg>
+      <span>Agent Passport</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#problem">Problem</a></li>
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#audit">Audit trail</a></li>
+      <li><a href="#integrations">Integrations</a></li>
+      <li><a href="https://github.com/priyansh-x/agent-passport" target="_blank" rel="noopener">GitHub</a></li>
+      <li><a href="https://github.com/priyansh-x/agent-passport/blob/main/docs/protocol-spec.md" target="_blank" rel="noopener" class="nav-cta">Docs</a></li>
+    </ul>
+  </nav>
+
+  <!-- ═══ Hero ═══ -->
+  <section class="hero">
+    <div class="hero-text">
+      <h1 class="hero-fade hero-fade-1">The authorization layer <span>your AI agents are missing</span></h1>
+      <p class="hero-sub hero-fade hero-fade-2">Scoped permissions, spend limits, delegation chains, and cascade revocation. Every action cryptographically signed and logged.</p>
+      <div class="hero-actions hero-fade hero-fade-3">
+        <a href="https://github.com/priyansh-x/agent-passport" target="_blank" rel="noopener" class="btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          View on GitHub
+        </a>
+        <a href="#how" class="btn-ghost">How it works</a>
+      </div>
+      <div class="hero-install hero-fade hero-fade-4" onclick="copyInstall()">
+        <span class="dollar">$</span>
+        <span>npm install @passport-agent/sdk</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      </div>
+    </div>
+
+    <div class="passport-visual hero-fade hero-fade-3">
+      <div class="passport-card">
+        <div class="passport-header">
+          <div class="passport-header-left">
+            <svg class="shield-logo" width="16" height="20" viewBox="-7 -9.5 14 15" fill="none">
+              <path d="M0,-8.5 C1.2,-8.5 6,-6.8 6,-3.4 L6,0 C3.6,1.275 1.2,3.4 0,4.25 C-1.2,3.4 -3.6,1.275 -6,0 L-6,-3.4 C-6,-6.8 -1.2,-8.5 0,-8.5Z" stroke="#0D9488" stroke-width="0.8" fill="none"/>
+              <path d="M0,-5.8 C0.8,-5.8 4,-4.64 4,-2.32 L4,0 C2.4,0.87 0.8,2.32 0,2.9 C-0.8,2.32 -2.4,0.87 -4,0 L-4,-2.32 C-4,-4.64 -0.8,-5.8 0,-5.8Z" stroke="#0D9488" stroke-width="0.5" stroke-opacity="0.4" fill="none"/>
+            </svg>
+            <span>Agent Passport</span>
+          </div>
+          <span class="passport-status">Active</span>
+        </div>
+        <div class="passport-body">
+          <div class="passport-field">
+            <div class="passport-label">Agent</div>
+            <div class="passport-value">booking-bot</div>
+          </div>
+          <div class="passport-field">
+            <div class="passport-label">Principal</div>
+            <div class="passport-value mono">user:alice@acme.com</div>
+          </div>
+          <div class="passport-field">
+            <div class="passport-label">Permissions</div>
+            <div class="passport-perms">
+              <span class="passport-perm">calendar:read</span>
+              <span class="passport-perm">calendar:write</span>
+              <span class="passport-perm">email:send</span>
+            </div>
+          </div>
+          <div class="passport-field">
+            <div class="passport-label">Limits</div>
+            <div class="passport-limits">
+              <div class="passport-limit">
+                <div class="passport-limit-val">$500</div>
+                <div class="passport-limit-label">Max spend</div>
+              </div>
+              <div class="passport-limit">
+                <div class="passport-limit-val">24h</div>
+                <div class="passport-limit-label">Time to live</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="passport-chain">
+          <div class="passport-chain-label">Delegation chain</div>
+          <div class="chain-flow">
+            <div class="chain-node"><span class="dot human"></span> alice</div>
+            <span class="chain-arrow">→</span>
+            <div class="chain-node"><span class="dot agent"></span> booking-bot</div>
+            <span class="chain-arrow">→</span>
+            <div class="chain-node"><span class="dot sub"></span> email-drafter</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Problem ═══ -->
+  <div class="section-border"></div>
+  <section class="section" id="problem">
+    <div class="section-tag reveal">The problem</div>
+    <h2 class="section-title reveal">Your agents have full access <span>or no access at all</span></h2>
+    <p class="section-desc reveal reveal-delay-1">Identity says who an agent is. Nothing says what it's allowed to do right now, how much it can spend, or when to cut it off.</p>
+
+    <div class="compare-grid">
+      <div class="compare-card without reveal reveal-delay-1">
+        <h3>Without passport</h3>
+        <div class="compare-item"><span class="compare-icon">✗</span> Full account access, no scoping</div>
+        <div class="compare-item"><span class="compare-icon">✗</span> No spend limits — agents drain budgets</div>
+        <div class="compare-item"><span class="compare-icon">✗</span> Revocation means rotating all keys</div>
+        <div class="compare-item"><span class="compare-icon">✗</span> No audit trail of what agents actually did</div>
+      </div>
+      <div class="compare-card with reveal reveal-delay-2">
+        <h3>With passport</h3>
+        <div class="compare-item"><span class="compare-icon">✓</span> Scoped permissions per agent, per task</div>
+        <div class="compare-item"><span class="compare-icon">✓</span> Budget caps with server-side tracking</div>
+        <div class="compare-item"><span class="compare-icon">✓</span> Instant revocation cascades to sub-agents</div>
+        <div class="compare-item"><span class="compare-icon">✓</span> Every action logged — allowed or denied</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ How It Works ═══ -->
+  <div class="section-border"></div>
+  <section class="section" id="how">
+    <div class="section-tag reveal">How it works</div>
+    <h2 class="section-title reveal">Three verbs. <span>That's the whole API.</span></h2>
+    <p class="section-desc reveal reveal-delay-1">Issue a passport, authorize actions against it, delegate to sub-agents with narrower scope.</p>
+
+    <div class="verbs-grid">
+      <div class="verb-card reveal reveal-delay-1">
+        <div class="verb-num">01</div>
+        <div class="verb-name">Issue</div>
+        <div class="verb-desc">Create a signed passport scoped to specific actions, budgets, and time windows.</div>
+        <div class="verb-code"><span class="kw">const</span> passport = AgentPassport.<span class="fn">issue</span>({
+  agent: <span class="str">"booking-bot"</span>,
+  permissions: [<span class="str">"calendar:*"</span>],
+  limits: { maxSpend: <span class="num">500</span> },
+  ttl: <span class="str">"24h"</span>,
+})</div>
+      </div>
+      <div class="verb-card reveal reveal-delay-2">
+        <div class="verb-num">02</div>
+        <div class="verb-name">Authorize</div>
+        <div class="verb-desc">Check every action before executing. Allowed or denied — every call is logged.</div>
+        <div class="verb-code"><span class="kw">const</span> result = passport.<span class="fn">authorize</span>({
+  action: <span class="str">"calendar:write"</span>,
+  spend: <span class="num">0</span>,
+})
+<span class="cmt">// → { allowed: true, remaining: 500 }</span>
+<span class="cmt">// → { allowed: false, reason: "…" }</span></div>
+      </div>
+      <div class="verb-card reveal reveal-delay-3">
+        <div class="verb-num">03</div>
+        <div class="verb-name">Delegate</div>
+        <div class="verb-desc">Hand a narrower passport to a sub-agent. Permissions only shrink, never grow.</div>
+        <div class="verb-code"><span class="kw">const</span> child = passport.<span class="fn">delegate</span>({
+  agent: <span class="str">"email-drafter"</span>,
+  permissions: [<span class="str">"email:send"</span>],
+  limits: { maxSpend: <span class="num">50</span> },
+})</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Audit Trail ═══ -->
+  <div class="section-border"></div>
+  <section class="section" id="audit">
+    <div class="section-tag reveal">Audit trail</div>
+    <h2 class="section-title reveal">Know exactly <span>what your agents did</span></h2>
+    <p class="section-desc reveal reveal-delay-1">Every authorize() call is logged. Persisted in SQLite, queryable by passport ID. Compliance-ready.</p>
+
+    <div class="audit-table reveal reveal-delay-2">
+      <div class="audit-thead">
+        <span class="audit-th"></span>
+        <span class="audit-th">Action</span>
+        <span class="audit-th">Agent</span>
+        <span class="audit-th">Time</span>
+        <span class="audit-th">Reason</span>
+      </div>
+      <div class="audit-row">
+        <span class="audit-status allow">✓</span>
+        <span class="audit-cell mono">calendar:read</span>
+        <span class="audit-cell">booking-bot</span>
+        <span class="audit-cell muted">14:23:01</span>
+        <span class="audit-cell muted">—</span>
+      </div>
+      <div class="audit-row">
+        <span class="audit-status allow">✓</span>
+        <span class="audit-cell mono">calendar:write</span>
+        <span class="audit-cell">booking-bot</span>
+        <span class="audit-cell muted">14:23:04</span>
+        <span class="audit-cell muted">—</span>
+      </div>
+      <div class="audit-row">
+        <span class="audit-status deny">✗</span>
+        <span class="audit-cell mono">payment:charge</span>
+        <span class="audit-cell">booking-bot</span>
+        <span class="audit-cell muted">14:23:08</span>
+        <span class="audit-cell muted">exceeds $500 budget</span>
+      </div>
+      <div class="audit-row">
+        <span class="audit-status allow">✓</span>
+        <span class="audit-cell mono">email:send</span>
+        <span class="audit-cell">email-drafter</span>
+        <span class="audit-cell muted">14:23:12</span>
+        <span class="audit-cell muted">—</span>
+      </div>
+      <div class="audit-row">
+        <span class="audit-status deny">✗</span>
+        <span class="audit-cell mono">email:send</span>
+        <span class="audit-cell">email-drafter</span>
+        <span class="audit-cell muted">14:23:15</span>
+        <span class="audit-cell muted">rate limit: 5/hour</span>
+      </div>
+      <div class="audit-row">
+        <span class="audit-status deny">✗</span>
+        <span class="audit-cell mono">database:drop</span>
+        <span class="audit-cell">booking-bot</span>
+        <span class="audit-cell muted">14:23:19</span>
+        <span class="audit-cell muted">permission not granted</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Integrations ═══ -->
+  <div class="section-border"></div>
+  <section class="section" id="integrations">
+    <div class="section-tag reveal">Integrations</div>
+    <h2 class="section-title reveal">Works with your stack <span>out of the box</span></h2>
+    <p class="section-desc reveal reveal-delay-1">Eight packages, one protocol. Click any to explore.</p>
+
+    <div class="int-grid" id="intGrid">
+      <div class="int-card reveal reveal-delay-1" data-int="mcp">
+        <div class="int-card-head">
+          <svg class="shield-icon" width="14" height="17" viewBox="-7 -9.5 14 15" fill="none"><path d="M0,-8.5 C1.2,-8.5 6,-6.8 6,-3.4 L6,0 C3.6,1.275 1.2,3.4 0,4.25 C-1.2,3.4 -3.6,1.275 -6,0 L-6,-3.4 C-6,-6.8 -1.2,-8.5 0,-8.5Z" stroke="currentColor" stroke-width="0.8" fill="none"/></svg>
+          <div class="int-name">MCP</div>
+        </div>
+        <div class="int-pkg">@passport-agent/mcp</div>
+        <div class="int-desc">Middleware for MCP tool call authorization</div>
+        <div class="int-expand">View details →</div>
+      </div>
+      <div class="int-card reveal reveal-delay-1" data-int="middleware">
+        <div class="int-card-head">
+          <svg class="shield-icon" width="14" height="17" viewBox="-7 -9.5 14 15" fill="none"><path d="M0,-8.5 C1.2,-8.5 6,-6.8 6,-3.4 L6,0 C3.6,1.275 1.2,3.4 0,4.25 C-1.2,3.4 -3.6,1.275 -6,0 L-6,-3.4 C-6,-6.8 -1.2,-8.5 0,-8.5Z" stroke="currentColor" stroke-width="0.8" fill="none"/></svg>
+          <div class="int-name">Express / Fastify</div>
+        </div>
+        <div class="int-pkg">@passport-agent/middleware</div>
+        <div class="int-desc">HTTP middleware for Node.js frameworks</div>
+        <div class="int-expand">View details →</div>
+      </div>
+      <div class="int-card reveal reveal-delay-2" data-int="langchain">
+        <div class="int-card-head">
+          <svg class="shield-icon" width="14" height="17" viewBox="-7 -9.5 14 15" fill="none"><path d="M0,-8.5 C1.2,-8.5 6,-6.8 6,-3.4 L6,0 C3.6,1.275 1.2,3.4 0,4.25 C-1.2,3.4 -3.6,1.275 -6,0 L-6,-3.4 C-6,-6.8 -1.2,-8.5 0,-8.5Z" stroke="currentColor" stroke-width="0.8" fill="none"/></svg>
+          <div class="int-name">LangChain</div>
+        </div>
+        <div class="int-pkg">@passport-agent/langchain</div>
+        <div class="int-desc">Tool wrapper for LangChain agents</div>
+        <div class="int-expand">View details →</div>
+      </div>
+      <div class="int-card reveal reveal-delay-2" data-int="crewai">
+        <div class="int-card-head">
+          <svg class="shield-icon" width="14" height="17" viewBox="-7 -9.5 14 15" fill="none"><path d="M0,-8.5 C1.2,-8.5 6,-6.8 6,-3.4 L6,0 C3.6,1.275 1.2,3.4 0,4.25 C-1.2,3.4 -3.6,1.275 -6,0 L-6,-3.4 C-6,-6.8 -1.2,-8.5 0,-8.5Z" stroke="currentColor" stroke-width="0.8" fill="none"/></svg>
+          <div class="int-name">CrewAI</div>
+        </div>
+        <div class="int-pkg">@passport-agent/crewai</div>
+        <div class="int-desc">Agent decorator for CrewAI</div>
+        <div class="int-expand">View details →</div>
+      </div>
+      <div class="int-card reveal reveal-delay-3" data-int="a2a">
+        <div class="int-card-head">
+          <svg class="shield-icon" width="14" height="17" viewBox="-7 -9.5 14 15" fill="none"><path d="M0,-8.5 C1.2,-8.5 6,-6.8 6,-3.4 L6,0 C3.6,1.275 1.2,3.4 0,4.25 C-1.2,3.4 -3.6,1.275 -6,0 L-6,-3.4 C-6,-6.8 -1.2,-8.5 0,-8.5Z" stroke="currentColor" stroke-width="0.8" fill="none"/></svg>
+          <div class="int-name">A2A Protocol</div>
+        </div>
+        <div class="int-pkg">@passport-agent/a2a</div>
+        <div class="int-desc">Agent Card extensions for A2A</div>
+        <div class="int-expand">View details →</div>
+      </div>
+      <div class="int-card reveal reveal-delay-3" data-int="server">
+        <div class="int-card-head">
+          <svg class="shield-icon" width="14" height="17" viewBox="-7 -9.5 14 15" fill="none"><path d="M0,-8.5 C1.2,-8.5 6,-6.8 6,-3.4 L6,0 C3.6,1.275 1.2,3.4 0,4.25 C-1.2,3.4 -3.6,1.275 -6,0 L-6,-3.4 C-6,-6.8 -1.2,-8.5 0,-8.5Z" stroke="currentColor" stroke-width="0.8" fill="none"/></svg>
+          <div class="int-name">Authority Server</div>
+        </div>
+        <div class="int-pkg">@passport-agent/server</div>
+        <div class="int-desc">Self-hosted REST API with SQLite and dashboard</div>
+        <div class="int-expand">View details →</div>
+      </div>
+      <div class="int-card reveal reveal-delay-4" data-int="core">
+        <div class="int-card-head">
+          <svg class="shield-icon" width="14" height="17" viewBox="-7 -9.5 14 15" fill="none"><path d="M0,-8.5 C1.2,-8.5 6,-6.8 6,-3.4 L6,0 C3.6,1.275 1.2,3.4 0,4.25 C-1.2,3.4 -3.6,1.275 -6,0 L-6,-3.4 C-6,-6.8 -1.2,-8.5 0,-8.5Z" stroke="currentColor" stroke-width="0.8" fill="none"/></svg>
+          <div class="int-name">Core</div>
+        </div>
+        <div class="int-pkg">@passport-agent/core</div>
+        <div class="int-desc">Token creation, validation, policy engine</div>
+        <div class="int-expand">View details →</div>
+      </div>
+      <div class="int-card reveal reveal-delay-4" data-int="sdk">
+        <div class="int-card-head">
+          <svg class="shield-icon" width="14" height="17" viewBox="-7 -9.5 14 15" fill="none"><path d="M0,-8.5 C1.2,-8.5 6,-6.8 6,-3.4 L6,0 C3.6,1.275 1.2,3.4 0,4.25 C-1.2,3.4 -3.6,1.275 -6,0 L-6,-3.4 C-6,-6.8 -1.2,-8.5 0,-8.5Z" stroke="currentColor" stroke-width="0.8" fill="none"/></svg>
+          <div class="int-name">SDK</div>
+        </div>
+        <div class="int-pkg">@passport-agent/sdk</div>
+        <div class="int-desc">Developer-facing API — the main entry point</div>
+        <div class="int-expand">View details →</div>
+      </div>
+
+      <!-- Detail panel (inserted dynamically) -->
+      <div class="int-detail" id="intDetail"></div>
+    </div>
+  </section>
+
+  <!-- ═══ CTA ═══ -->
+  <div class="section-border"></div>
+  <section class="cta-section">
+    <div class="cta-shield reveal">
+      <svg width="48" height="58" viewBox="-7 -9.5 14 15" fill="none">
+        <path d="M0,-8.5 C1.2,-8.5 6,-6.8 6,-3.4 L6,0 C3.6,1.275 1.2,3.4 0,4.25 C-1.2,3.4 -3.6,1.275 -6,0 L-6,-3.4 C-6,-6.8 -1.2,-8.5 0,-8.5Z" stroke="#0D9488" stroke-width="0.5" fill="none"/>
+        <path d="M0,-5.8 C0.8,-5.8 4,-4.64 4,-2.32 L4,0 C2.4,0.87 0.8,2.32 0,2.9 C-0.8,2.32 -2.4,0.87 -4,0 L-4,-2.32 C-4,-4.64 -0.8,-5.8 0,-5.8Z" stroke="#0D9488" stroke-width="0.3" stroke-opacity="0.4" fill="none"/>
+      </svg>
+    </div>
+    <h2 class="cta-title reveal reveal-delay-1">Start in ten lines. <span>Scale to production.</span></h2>
+    <p class="cta-desc reveal reveal-delay-2">Open protocol. MIT licensed. No vendor lock-in.</p>
+    <div class="cta-install reveal reveal-delay-3" onclick="copyInstall()">
+      <span class="dollar">$</span>
+      <span>npm install @passport-agent/sdk</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+    </div>
+    <div class="cta-links reveal reveal-delay-4">
+      <a href="https://github.com/priyansh-x/agent-passport" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://www.npmjs.com/org/passport-agent" target="_blank" rel="noopener">npm</a>
+      <a href="https://github.com/priyansh-x/agent-passport/blob/main/docs/protocol-spec.md" target="_blank" rel="noopener">Protocol spec</a>
+    </div>
+  </section>
+
+  <!-- ═══ Footer ═══ -->
+  <footer>
+    <p>&copy; 2025 Agent Passport &middot; MIT License</p>
+    <ul class="footer-links">
+      <li><a href="https://github.com/priyansh-x/agent-passport" target="_blank" rel="noopener">GitHub</a></li>
+      <li><a href="https://www.npmjs.com/org/passport-agent" target="_blank" rel="noopener">npm</a></li>
+    </ul>
+  </footer>
+
   <script>
-    // ── Scroll reveal ──
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
-      });
-    }, { threshold: 0.1 });
-    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+    // ── Interactive Dot Grid Background ──
+    (function() {
+      const canvas = document.getElementById('dotCanvas');
+      const ctx = canvas.getContext('2d');
+      let w, h, dots = [];
+      let mouseX = -1000, mouseY = -1000;
+      const SPACING = 48;
+      const RADIUS = 1;
+      const INFLUENCE = 100;
 
-    // ── Smooth scroll ──
-    document.querySelectorAll('a[href^="#"]').forEach(a => {
-      a.addEventListener('click', e => {
-        const t = document.querySelector(a.getAttribute('href'));
-        if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth' }); }
-      });
-    });
-
-    // ── Copy install ──
-    function copyInstall() {
-      navigator.clipboard.writeText('npm install @passport-agent/sdk');
-      const el = document.getElementById('install-text');
-      if (el) { const orig = el.textContent; el.textContent = 'copied!'; setTimeout(() => el.textContent = orig, 1500); }
-    }
-
-    // ── Interactive terminal ──
-    const ALLOWED = ['calendar:read', 'calendar:write', 'email:send'];
-    const terminal = document.getElementById('terminal');
-    const tryInput = document.getElementById('try-input');
-    const tryResult = document.getElementById('try-result');
-
-    function authorize(action) {
-      const allowed = ALLOWED.includes(action);
-
-      if (!allowed) {
-        terminal.classList.remove('shake');
-        void terminal.offsetWidth;
-        terminal.classList.add('shake');
+      function resize() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+        dots = [];
+        for (let x = SPACING; x < w; x += SPACING) {
+          for (let y = SPACING; y < h; y += SPACING) {
+            dots.push({ ox: x, oy: y, x, y });
+          }
+        }
       }
 
-      tryResult.innerHTML = allowed
-        ? `<span class="t-ok">→ ✓ allowed</span>`
-        : `<span class="t-no">→ ✗ denied</span> <span class="t-dim">— "${action}" is not in permissions scope</span>`;
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        for (const d of dots) {
+          const dx = mouseX - d.ox;
+          const dy = mouseY - d.oy;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < INFLUENCE) {
+            const force = (1 - dist / INFLUENCE) * 12;
+            d.x = d.ox + (dx / dist) * force;
+            d.y = d.oy + (dy / dist) * force;
+          } else {
+            d.x += (d.ox - d.x) * 0.1;
+            d.y += (d.oy - d.y) * 0.1;
+          }
+          const proximity = dist < INFLUENCE ? (1 - dist / INFLUENCE) : 0;
+          const alpha = 0.12 + proximity * 0.45;
+          const r = RADIUS + proximity * 2.2;
+          ctx.beginPath();
+          ctx.arc(d.x, d.y, r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(13, 148, 136, ${alpha})`;
+          ctx.fill();
+        }
+        requestAnimationFrame(draw);
+      }
 
-      // highlight chips
-      document.querySelectorAll('.try-chip').forEach(c => {
-        c.classList.remove('allowed', 'denied');
-        if (c.dataset.action === action) {
-          c.classList.add(allowed ? 'allowed' : 'denied');
+      window.addEventListener('resize', resize);
+      window.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
+      window.addEventListener('mouseleave', () => { mouseX = -1000; mouseY = -1000; });
+      resize();
+      draw();
+      setTimeout(() => canvas.classList.add('visible'), 100);
+    })();
+
+    // ── Intro Globe → Dot Grid Transition ──
+    (function() {
+      const overlay = document.getElementById('introOverlay');
+      const canvas = document.getElementById('introCanvas');
+      const ctx = canvas.getContext('2d');
+      let W, H, cx, cy;
+
+      function resize() {
+        W = canvas.width = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+        cx = W / 2;
+        cy = H / 2;
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      const R = Math.min(W, H) * 0.28;
+      let angle = 0;
+      let phase = 'globe'; // 'globe' → 'scatter' → 'done'
+      let scatterStart = 0;
+      const SCATTER_DUR = 1800;
+      const GLOBE_DUR = 1500;
+      const startTime = performance.now();
+
+      // Build globe points (sphere surface)
+      const globeDots = [];
+      const RINGS = 14, PER_RING = 28;
+      for (let i = 0; i <= RINGS; i++) {
+        const phi = (Math.PI * i) / RINGS;
+        for (let j = 0; j < PER_RING; j++) {
+          const theta = (2 * Math.PI * j) / PER_RING;
+          globeDots.push({
+            sx: Math.sin(phi) * Math.cos(theta),
+            sy: Math.cos(phi),
+            sz: Math.sin(phi) * Math.sin(theta),
+            // scatter target — random position offscreen
+            randAngle: Math.random() * Math.PI * 2,
+            randDist: 300 + Math.random() * 500,
+          });
+        }
+      }
+
+      // Add meridian dots for denser wireframe look
+      for (let m = 0; m < 8; m++) {
+        const theta = (Math.PI * m) / 8;
+        for (let i = 0; i <= 48; i++) {
+          const phi = (Math.PI * i) / 48;
+          globeDots.push({
+            sx: Math.sin(phi) * Math.cos(theta),
+            sy: Math.cos(phi),
+            sz: Math.sin(phi) * Math.sin(theta),
+            randAngle: Math.random() * Math.PI * 2,
+            randDist: 300 + Math.random() * 500,
+          });
+        }
+      }
+
+      function easeInOutQuad(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+
+      function draw(now) {
+        if (phase === 'done') return;
+
+        ctx.clearRect(0, 0, W, H);
+        const cosA = Math.cos(angle), sinA = Math.sin(angle);
+
+        if (phase === 'globe') {
+          // Rotating globe in center
+          const elapsed = now - startTime;
+          const fadeIn = Math.min(elapsed / 600, 1);
+
+          for (const d of globeDots) {
+            const rx = d.sx * cosA - d.sz * sinA;
+            const rz = d.sx * sinA + d.sz * cosA;
+            if (rz < -0.1) continue;
+
+            const px = cx + rx * R;
+            const py = cy + d.sy * R;
+            const alpha = (0.3 + rz * 0.5) * fadeIn;
+            const size = 1.8 + rz * 1.2;
+
+            ctx.beginPath();
+            ctx.arc(px, py, size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(13, 148, 136, ${alpha})`;
+            ctx.fill();
+          }
+
+          // Draw connecting lines
+          const projected = globeDots.map(d => {
+            const rx = d.sx * cosA - d.sz * sinA;
+            const rz = d.sx * sinA + d.sz * cosA;
+            return { px: cx + rx * R, py: cy + d.sy * R, rz, front: rz > -0.1 };
+          });
+          for (let i = 0; i < projected.length; i++) {
+            const a = projected[i];
+            if (!a.front) continue;
+            for (let j = i + 1; j < Math.min(i + 3, projected.length); j++) {
+              const b = projected[j];
+              if (!b.front) continue;
+              const dx = a.px - b.px, dy = a.py - b.py;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < 35) {
+                ctx.beginPath();
+                ctx.moveTo(a.px, a.py);
+                ctx.lineTo(b.px, b.py);
+                ctx.strokeStyle = `rgba(13, 148, 136, ${(0.08 + Math.min(a.rz, b.rz) * 0.12) * fadeIn})`;
+                ctx.lineWidth = 0.7;
+                ctx.stroke();
+              }
+            }
+          }
+
+          angle += 0.004;
+
+          if (elapsed > GLOBE_DUR) {
+            phase = 'scatter';
+            scatterStart = now;
+            // Snapshot each dot's current globe position as scatter origin
+            for (const d of globeDots) {
+              const rx = d.sx * cosA - d.sz * sinA;
+              d.fromX = cx + rx * R;
+              d.fromY = cy + d.sy * R;
+              d.tx = d.fromX + Math.cos(d.randAngle) * d.randDist;
+              d.ty = d.fromY + Math.sin(d.randAngle) * d.randDist;
+            }
+          }
+        }
+
+        if (phase === 'scatter') {
+          const elapsed = now - scatterStart;
+          const t = Math.min(elapsed / SCATTER_DUR, 1);
+          const ease = easeInOutQuad(t);
+          const alphaFade = Math.max(0, 1 - t * t);
+
+          for (const d of globeDots) {
+            const x = d.fromX + (d.tx - d.fromX) * ease;
+            const y = d.fromY + (d.ty - d.fromY) * ease;
+            const size = 1.8 * (1 - ease * 0.6);
+            const alpha = 0.45 * alphaFade;
+
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(13, 148, 136, ${alpha})`;
+            ctx.fill();
+          }
+
+          if (t >= 1) {
+            phase = 'done';
+            overlay.classList.add('fade-out');
+            setTimeout(() => { overlay.remove(); }, 900);
+            return;
+          }
+        }
+
+        requestAnimationFrame(draw);
+      }
+
+      requestAnimationFrame(draw);
+    })();
+
+    // ── Scroll Reveal ──
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
         }
       });
+    }, { threshold: 0.1 });
 
-      tryInput.value = action;
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // ── Nav scroll shadow ──
+    window.addEventListener('scroll', () => {
+      document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 20);
+    });
+
+    // ── Integration detail panels ──
+    const INT_DATA = {
+      mcp: {
+        title: 'MCP Plugin',
+        desc: 'Drop-in middleware for Model Context Protocol servers. Intercepts tool calls and checks them against the agent\'s passport before execution. Auto-discovers MCP server capabilities and maps them to permission scopes.',
+        install: 'npm install @passport-agent/mcp',
+        code: '<span class="kw">import</span> { withPassport } <span class="kw">from</span> <span class="str">"@passport-agent/mcp"</span>\n\nserver.tool(<span class="str">"book_meeting"</span>,\n  withPassport(<span class="str">"calendar:write"</span>, handler)\n)'
+      },
+      middleware: {
+        title: 'Express / Fastify',
+        desc: 'HTTP middleware that validates passport tokens from request headers. Works with Express, Fastify, or any Connect-compatible framework. Attaches the verified passport to the request object.',
+        install: 'npm install @passport-agent/middleware',
+        code: '<span class="kw">import</span> { passportGuard } <span class="kw">from</span> <span class="str">"@passport-agent/middleware"</span>\n\napp.use(<span class="str">"/api"</span>, passportGuard())\napp.post(<span class="str">"/api/book"</span>, (req, res) =&gt; {\n  <span class="cmt">// req.passport is verified</span>\n})'
+      },
+      langchain: {
+        title: 'LangChain',
+        desc: 'Wraps LangChain tools with passport authorization. The agent must present a valid passport with matching permissions before any tool invocation. Supports both Python and TypeScript.',
+        install: 'npm install @passport-agent/langchain',
+        code: '<span class="kw">import</span> { ProtectedTool } <span class="kw">from</span> <span class="str">"@passport-agent/langchain"</span>\n\n<span class="kw">const</span> tool = <span class="kw">new</span> ProtectedTool({\n  tool: searchTool,\n  permission: <span class="str">"search:web"</span>,\n})'
+      },
+      crewai: {
+        title: 'CrewAI',
+        desc: 'Decorator that enforces passport checks on CrewAI agent actions. Each agent in the crew gets its own delegated passport with appropriately narrowed permissions.',
+        install: 'npm install @passport-agent/crewai',
+        code: '<span class="kw">import</span> { passportAgent } <span class="kw">from</span> <span class="str">"@passport-agent/crewai"</span>\n\n<span class="kw">const</span> agent = passportAgent(researcher, {\n  permissions: [<span class="str">"search:*"</span>],\n})'
+      },
+      a2a: {
+        title: 'A2A Protocol',
+        desc: 'Extends Google\'s Agent-to-Agent protocol with passport fields in the Agent Card. Agents automatically exchange and validate passports during A2A handshakes.',
+        install: 'npm install @passport-agent/a2a',
+        code: '<span class="kw">import</span> { A2APassport } <span class="kw">from</span> <span class="str">"@passport-agent/a2a"</span>\n\nagentCard.capabilities.passport =\n  A2APassport.<span class="fn">fromToken</span>(token)'
+      },
+      server: {
+        title: 'Authority Server',
+        desc: 'Self-hosted passport authority with REST API, SQLite persistence, and a built-in dashboard. Issue, revoke, and audit passports from one place. Run locally or deploy anywhere.',
+        install: 'npx @passport-agent/server',
+        code: '<span class="cmt">// POST /v1/passports</span>\n<span class="cmt">// GET  /v1/passports/:id</span>\n<span class="cmt">// POST /v1/passports/:id/authorize</span>\n<span class="cmt">// POST /v1/passports/:id/revoke</span>\n<span class="cmt">// GET  /v1/audit</span>'
+      },
+      core: {
+        title: 'Core',
+        desc: 'The engine: token creation/validation, Ed25519 signing, Biscuit token support, policy engine with Datalog rules, revocation lists, and the audit logger. Everything else depends on this.',
+        install: 'npm install @passport-agent/core',
+        code: '<span class="kw">import</span> { createPassport, verify }\n  <span class="kw">from</span> <span class="str">"@passport-agent/core"</span>\n\n<span class="kw">const</span> token = createPassport(claims, key)\n<span class="kw">const</span> valid = verify(token, pubKey)'
+      },
+      sdk: {
+        title: 'SDK',
+        desc: 'The main developer-facing package. Wraps core with a clean API: issue(), authorize(), delegate(), revoke(). TypeScript-first with full type inference. This is what you npm install.',
+        install: 'npm install @passport-agent/sdk',
+        code: '<span class="kw">import</span> { AgentPassport } <span class="kw">from</span> <span class="str">"@passport-agent/sdk"</span>\n\n<span class="kw">const</span> p = AgentPassport.<span class="fn">issue</span>({ <span class="cmt">…</span> })\np.<span class="fn">authorize</span>(<span class="str">"calendar:read"</span>)\np.<span class="fn">delegate</span>({ <span class="cmt">…</span> })'
+      }
+    };
+
+    let activeInt = null;
+
+    document.querySelectorAll('.int-card[data-int]').forEach(card => {
+      card.addEventListener('click', () => {
+        const key = card.dataset.int;
+        const detail = document.getElementById('intDetail');
+        const grid = document.getElementById('intGrid');
+
+        if (activeInt === key) {
+          detail.classList.remove('active');
+          card.classList.remove('active');
+          activeInt = null;
+          return;
+        }
+
+        document.querySelectorAll('.int-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        activeInt = key;
+
+        const d = INT_DATA[key];
+        detail.innerHTML = `
+          <div class="int-detail-head">
+            <div class="int-detail-title">
+              <svg width="18" height="22" viewBox="-7 -9.5 14 15" fill="none">
+                <path d="M0,-8.5 C1.2,-8.5 6,-6.8 6,-3.4 L6,0 C3.6,1.275 1.2,3.4 0,4.25 C-1.2,3.4 -3.6,1.275 -6,0 L-6,-3.4 C-6,-6.8 -1.2,-8.5 0,-8.5Z" stroke="#0D9488" stroke-width="0.8" fill="none"/>
+                <path d="M0,-5.8 C0.8,-5.8 4,-4.64 4,-2.32 L4,0 C2.4,0.87 0.8,2.32 0,2.9 C-0.8,2.32 -2.4,0.87 -4,0 L-4,-2.32 C-4,-4.64 -0.8,-5.8 0,-5.8Z" stroke="#0D9488" stroke-width="0.5" stroke-opacity="0.4" fill="none"/>
+              </svg>
+              <h4>${d.title}</h4>
+            </div>
+            <button class="int-detail-close" onclick="closeDetail(event)">✕</button>
+          </div>
+          <div class="int-detail-body">
+            <div class="int-detail-info">
+              <p>${d.desc}</p>
+              <div class="int-detail-install" onclick="copyText('${d.install}', this)">
+                <span class="d">$</span> ${d.install}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              </div>
+            </div>
+            <div class="int-detail-code">${d.code}</div>
+          </div>
+        `;
+
+        detail.classList.add('active');
+
+        // Move detail panel right after the clicked card's row
+        const cards = [...grid.querySelectorAll('.int-card[data-int]')];
+        const idx = cards.indexOf(card);
+        const cols = window.innerWidth > 900 ? 4 : window.innerWidth > 500 ? 2 : 1;
+        const rowEnd = Math.min(Math.ceil((idx + 1) / cols) * cols, cards.length);
+        const afterCard = cards[rowEnd - 1];
+        afterCard.after(detail);
+
+        detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    });
+
+    function closeDetail(e) {
+      e.stopPropagation();
+      document.getElementById('intDetail').classList.remove('active');
+      document.querySelectorAll('.int-card').forEach(c => c.classList.remove('active'));
+      activeInt = null;
     }
 
-    document.querySelectorAll('.try-chip').forEach(chip => {
-      chip.addEventListener('click', () => authorize(chip.dataset.action));
-    });
+    function copyText(text, el) {
+      event.stopPropagation();
+      navigator.clipboard.writeText(text);
+      const orig = el.innerHTML;
+      el.style.opacity = '0.6';
+      setTimeout(() => { el.style.opacity = '1'; }, 300);
+    }
 
-    tryInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && tryInput.value.trim()) {
-        authorize(tryInput.value.trim());
-      }
-    });
-
-
-    // ── Stat counter animation ──
-    const statObs = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (!e.isIntersecting) return;
-        const el = e.target;
-        const target = parseInt(el.dataset.target);
-        const suffix = el.querySelector('.pct')?.textContent || '';
-        let current = 0;
-        const step = Math.max(1, Math.ceil(target / 35));
-        const iv = setInterval(() => {
-          current = Math.min(current + step, target);
-          el.childNodes[0].textContent = current;
-          if (current >= target) clearInterval(iv);
-        }, 30);
-        statObs.unobserve(el);
+    function copyInstall() {
+      navigator.clipboard.writeText('npm install @passport-agent/sdk');
+      const els = document.querySelectorAll('.hero-install, .cta-install');
+      els.forEach(el => {
+        const span = el.querySelector('span:nth-child(2)');
+        if (span) {
+          const orig = span.textContent;
+          span.textContent = 'Copied!';
+          setTimeout(() => { span.textContent = orig; }, 1500);
+        }
       });
-    }, { threshold: 0.3 });
-
-    document.querySelectorAll('.stat-num').forEach(el => {
-      const num = parseInt(el.textContent);
-      el.dataset.target = num;
-      el.childNodes[0].textContent = '0';
-      statObs.observe(el);
-    });
+    }
   </script>
 
 </body>
