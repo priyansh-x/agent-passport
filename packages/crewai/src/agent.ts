@@ -1,4 +1,4 @@
-import type { SignedPassport } from '@passport-agent/core';
+import type { SignedPassport, AuditEntry } from '@passport-agent/core';
 import { PassportIssuer } from '@passport-agent/core';
 
 export interface AgentConfig {
@@ -28,6 +28,13 @@ export interface CrewResult {
   success: boolean;
   result?: unknown;
   error?: string;
+}
+
+export interface PipelineResult {
+  results: CrewResult[];
+  completed: number;
+  failed: number;
+  totalSpent: number;
 }
 
 export class PassportAgent {
@@ -72,12 +79,33 @@ export class PassportAgent {
     }
   }
 
+  async executeTasks(tasks: TaskDefinition[]): Promise<CrewResult[]> {
+    const results: CrewResult[] = [];
+    for (const task of tasks) {
+      results.push(await this.executeTask(task));
+    }
+    return results;
+  }
+
   get passportId(): string {
     return this.passport.payload.id;
   }
 
   get permissions(): string[] {
     return this.passport.payload.permissions.map((p) => p.action);
+  }
+
+  get remainingBudget(): number {
+    return this.passport.payload.limits.maxSpend - this.passport.payload.limits.spent;
+  }
+
+  delegate(childConfig: AgentConfig): PassportAgent {
+    const childPassport = this.issuer.delegate(this.passport, {
+      agent: `agent:${childConfig.name}`,
+      permissions: childConfig.permissions,
+      limits: childConfig.limits,
+    });
+    return new PassportAgent(childConfig, childPassport, this.issuer);
   }
 }
 
@@ -100,4 +128,35 @@ export function createCrew(
     });
     return new PassportAgent(agentConfig, agentPassport, crewConfig.issuer);
   });
+}
+
+export interface PipelineStep {
+  agent: PassportAgent;
+  tasks: TaskDefinition[];
+}
+
+export async function runPipeline(
+  steps: PipelineStep[],
+  options?: { stopOnFailure?: boolean },
+): Promise<PipelineResult> {
+  const results: CrewResult[] = [];
+  let completed = 0;
+  let failed = 0;
+
+  for (const step of steps) {
+    for (const task of step.tasks) {
+      const result = await step.agent.executeTask(task);
+      results.push(result);
+      if (result.success) {
+        completed++;
+      } else {
+        failed++;
+        if (options?.stopOnFailure) {
+          return { results, completed, failed, totalSpent: 0 };
+        }
+      }
+    }
+  }
+
+  return { results, completed, failed, totalSpent: 0 };
 }

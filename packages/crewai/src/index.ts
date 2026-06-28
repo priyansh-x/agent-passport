@@ -1,2 +1,2 @@
-export { PassportAgent, createCrew } from './agent.js';
-export type { AgentConfig, TaskDefinition, CrewConfig, CrewResult } from './agent.js';
+export { PassportAgent, createCrew, runPipeline } from './agent.js';
+export type { AgentConfig, TaskDefinition, CrewConfig, CrewResult, PipelineStep, PipelineResult } from './agent.js';

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { PassportIssuer } from '@passport-agent/core';
-import { PassportAgent, createCrew } from '../agent.js';
+import { PassportAgent, createCrew, runPipeline } from '../agent.js';
 
 describe('CrewAI Integration', () => {
   describe('PassportAgent', () => {
@@ -83,6 +83,72 @@ describe('CrewAI Integration', () => {
       });
       expect(r2.success).toBe(false);
     });
+
+    it('reports remaining budget', () => {
+      const issuer = new PassportIssuer();
+      const passport = issuer.issue({
+        principal: 'user:alice@test.com',
+        agent: 'agent:buyer',
+        permissions: ['purchase'],
+        limits: { maxSpend: 100 },
+      });
+      const agent = new PassportAgent(
+        { name: 'buyer', role: 'Buyer', permissions: ['purchase'] },
+        passport,
+        issuer,
+      );
+      expect(agent.remainingBudget).toBe(100);
+    });
+
+    it('executes multiple tasks sequentially', async () => {
+      const issuer = new PassportIssuer();
+      const passport = issuer.issue({
+        principal: 'user:alice@test.com',
+        agent: 'agent:worker',
+        permissions: ['read', 'write'],
+      });
+      const agent = new PassportAgent(
+        { name: 'worker', role: 'Worker', permissions: ['read', 'write'] },
+        passport,
+        issuer,
+      );
+
+      const results = await agent.executeTasks([
+        { description: 'Read', requiredPermission: 'read', execute: () => 'data' },
+        { description: 'Write', requiredPermission: 'write', execute: () => 'ok' },
+        { description: 'Delete', requiredPermission: 'admin:delete', execute: () => 'gone' },
+      ]);
+
+      expect(results).toHaveLength(3);
+      expect(results[0]!.success).toBe(true);
+      expect(results[1]!.success).toBe(true);
+      expect(results[2]!.success).toBe(false);
+    });
+
+    it('delegates to child agent with narrowed permissions', () => {
+      const issuer = new PassportIssuer();
+      const passport = issuer.issue({
+        principal: 'user:alice@test.com',
+        agent: 'agent:parent',
+        permissions: ['read', 'write', 'admin'],
+        limits: { maxSpend: 500 },
+      });
+      const parent = new PassportAgent(
+        { name: 'parent', role: 'Parent', permissions: ['read', 'write', 'admin'] },
+        passport,
+        issuer,
+      );
+
+      const child = parent.delegate({
+        name: 'child',
+        role: 'Child',
+        permissions: ['read'],
+        limits: { maxSpend: 50 },
+      });
+
+      expect(child.permissions).toEqual(['read']);
+      expect(child.remainingBudget).toBe(50);
+    });
   });
 
   describe('createCrew', () => {
@@ -144,6 +210,71 @@ describe('CrewAI Integration', () => {
         execute: () => 'written',
       });
       expect(r3.success).toBe(true);
+    });
+  });
+
+  describe('runPipeline', () => {
+    it('runs tasks across multiple agents', async () => {
+      const issuer = new PassportIssuer();
+      const crew = createCrew(
+        {
+          principal: 'user:alice@test.com',
+          issuer,
+          permissions: ['search', 'write'],
+        },
+        [
+          { name: 'reader', role: 'Reader', permissions: ['search'] },
+          { name: 'writer', role: 'Writer', permissions: ['write'] },
+        ],
+      );
+
+      const result = await runPipeline([
+        {
+          agent: crew[0]!,
+          tasks: [
+            { description: 'Search docs', requiredPermission: 'search', execute: () => 'found' },
+          ],
+        },
+        {
+          agent: crew[1]!,
+          tasks: [
+            { description: 'Write report', requiredPermission: 'write', execute: () => 'written' },
+          ],
+        },
+      ]);
+
+      expect(result.completed).toBe(2);
+      expect(result.failed).toBe(0);
+      expect(result.results).toHaveLength(2);
+    });
+
+    it('stops on failure when configured', async () => {
+      const issuer = new PassportIssuer();
+      const crew = createCrew(
+        {
+          principal: 'user:alice@test.com',
+          issuer,
+          permissions: ['search'],
+        },
+        [{ name: 'reader', role: 'Reader', permissions: ['search'] }],
+      );
+
+      const result = await runPipeline(
+        [
+          {
+            agent: crew[0]!,
+            tasks: [
+              { description: 'Forbidden', requiredPermission: 'admin', execute: () => 'no' },
+              { description: 'Search', requiredPermission: 'search', execute: () => 'yes' },
+            ],
+          },
+        ],
+        { stopOnFailure: true },
+      );
+
+      expect(result.failed).toBe(1);
+      expect(result.completed).toBe(0);
+      expect(result.results).toHaveLength(1);
     });
   });
 });
