@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agent Passport — Explain It Like I'm Five</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --void: #09090b;
+      --bone: #fafaf9;
+      --zinc: #a1a1aa;
+      --muted: #52525b;
+      --rule: rgba(255,255,255,0.08);
+      --allow: #22c55e;
+      --deny: #ef4444;
+      --seal: #eab308;
+      --sans: 'Inter', system-ui, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--void);
+      color: var(--bone);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.7;
+    }
+
+    /* ── Nav ── */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      padding: 14px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(9,9,11,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--rule);
+    }
+    .nav-mark {
+      font-family: var(--mono); font-size: 13px; font-weight: 500;
+      color: var(--bone); text-decoration: none;
+      display: inline-flex; align-items: center; gap: 10px;
+    }
+    .nav-shield { width: 18px; height: 22px; }
+    .nav-back {
+      font-size: 13px; color: var(--zinc); text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--bone); }
+
+    /* ── Layout ── */
+    .page { max-width: 720px; margin: 0 auto; padding: 120px 24px 80px; }
+
+    /* ── Hero ── */
+    .eli5-hero { margin-bottom: 80px; }
+    .eli5-hero h1 {
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+    .eli5-hero h1 .hl {
+      background: linear-gradient(135deg, var(--seal), #f59e0b);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .eli5-hero p {
+      font-size: 18px; color: var(--zinc); max-width: 540px;
+    }
+
+    /* ── TOC ── */
+    .toc {
+      margin-bottom: 80px;
+      padding: 24px 28px;
+      border: 1px solid var(--rule);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.02);
+    }
+    .toc-title {
+      font-family: var(--mono); font-size: 11px; font-weight: 500;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--seal); margin-bottom: 14px;
+    }
+    .toc-list { list-style: none; }
+    .toc-list li { margin-bottom: 6px; }
+    .toc-list a {
+      font-size: 15px; color: var(--zinc); text-decoration: none;
+      transition: color 0.15s;
+    }
+    .toc-list a:hover { color: var(--bone); }
+    .toc-list .num {
+      font-family: var(--mono); font-size: 12px; color: var(--seal);
+      margin-right: 10px;
+    }
+
+    /* ── Sections ── */
+    .section {
+      margin-bottom: 80px;
+      padding-bottom: 80px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .section:last-of-type { border-bottom: none; }
+
+    .section-num {
+      font-family: var(--mono); font-size: 12px; color: var(--seal);
+      letter-spacing: 0.06em; margin-bottom: 8px;
+    }
+
+    .section h2 {
+      font-size: 28px; font-weight: 700;
+      letter-spacing: -0.02em; margin-bottom: 20px;
+    }
+
+    .section p {
+      font-size: 16px; color: var(--zinc); margin-bottom: 16px;
+    }
+
+    .section strong { color: var(--bone); }
+
+    /* ── Analogy boxes ── */
+    .analogy {
+      margin: 20px 0;
+      padding: 18px 22px;
+      border-left: 3px solid var(--seal);
+      background: rgba(234,179,8,0.04);
+      border-radius: 0 8px 8px 0;
+      font-size: 15px;
+      color: var(--bone);
+    }
+    .analogy-label {
+      font-family: var(--mono); font-size: 11px; font-weight: 500;
+      color: var(--seal); letter-spacing: 0.06em;
+      margin-bottom: 6px; text-transform: uppercase;
+    }
+
+    /* ── Code blocks ── */
+    .code {
+      margin: 20px 0;
+      padding: 18px 22px;
+      background: #0c0c10;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.8;
+      overflow-x: auto;
+    }
+    .t-kw { color: #c4b5fd; }
+    .t-fn { color: #93c5fd; }
+    .t-str { color: #86efac; }
+    .t-prop { color: #e2e8f0; }
+    .t-num { color: #fbbf24; }
+    .t-cmt { color: var(--muted); }
+    .t-ok { color: var(--allow); }
+    .t-no { color: var(--deny); }
+
+    /* ── Feature grid ── */
+    .feat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .feat-card {
+      padding: 16px 18px;
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.02);
+    }
+    .feat-card-title {
+      font-size: 14px; font-weight: 600; margin-bottom: 4px;
+      color: var(--seal);
+    }
+    .feat-card-desc { font-size: 13px; color: var(--zinc); }
+
+    /* ── Chain diagram ── */
+    .chain {
+      display: flex; align-items: center; gap: 8px;
+      margin: 24px 0; flex-wrap: wrap;
+    }
+    .chain-node {
+      padding: 10px 18px;
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      font-size: 13px;
+      background: rgba(255,255,255,0.02);
+      text-align: center;
+    }
+    .chain-node small {
+      display: block; font-family: var(--mono);
+      font-size: 11px; color: var(--muted); margin-top: 2px;
+    }
+    .chain-arrow { color: var(--seal); font-size: 16px; }
+
+    /* ── Integration list ── */
+    .int-list {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; margin: 20px 0;
+    }
+    .int-item {
+      padding: 12px 16px;
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .int-item strong { color: var(--seal); }
+    .int-item span { color: var(--zinc); font-size: 13px; }
+
+    /* ── Bottom CTA ── */
+    .bottom-cta {
+      text-align: center; padding: 60px 0;
+    }
+    .bottom-cta h2 {
+      font-size: 28px; font-weight: 700; margin-bottom: 12px;
+    }
+    .bottom-cta p { color: var(--zinc); margin-bottom: 28px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 24px; font-size: 14px; font-weight: 600;
+      text-decoration: none; border-radius: 6px; transition: all 0.2s;
+    }
+    .btn-primary { background: var(--bone); color: var(--void); }
+    .btn-primary:hover { background: #fff; box-shadow: 0 0 20px rgba(255,255,255,0.12); }
+    .btn-ghost {
+      background: transparent; color: var(--zinc);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.3); color: var(--bone); }
+
+    @media (max-width: 600px) {
+      .feat-grid, .int-list { grid-template-columns: 1fr; }
+      .chain { flex-direction: column; }
+      .chain-arrow { transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <a href="/index-v2.html" class="nav-mark">
+      <svg class="nav-shield" viewBox="-7 -9.5 14 15" fill="none">
+        <path d="M0,-8.5 C1.2,-8.5 6,-6.8 6,-3.4 L6,0 C3.6,1.275 1.2,3.4 0,4.25 C-1.2,3.4 -3.6,1.275 -6,0 L-6,-3.4 C-6,-6.8 -1.2,-8.5 0,-8.5Z" stroke="#eab308" stroke-width="0.8" fill="none"/>
+        <path d="M0,-5.8 C0.8,-5.8 4,-4.64 4,-2.32 L4,0 C2.4,0.87 0.8,2.32 0,2.9 C-0.8,2.32 -2.4,0.87 -4,0 L-4,-2.32 C-4,-4.64 -0.8,-5.8 0,-5.8Z" stroke="#eab308" stroke-width="0.5" stroke-opacity="0.4" fill="none"/>
+      </svg>
+      Agent Passport
+    </a>
+    <a href="/index-v2.html" class="nav-back">← Back to home</a>
+  </nav>
+
+  <div class="page">
+
+    <div class="eli5-hero">
+      <h1>Explain it like <span class="hl">I'm five</span></h1>
+      <p>Everything Agent Passport does, why it exists, and how it works — without the jargon.</p>
+    </div>
+
+    <div class="toc">
+      <div class="toc-title">What we'll cover</div>
+      <ol class="toc-list">
+        <li><a href="#problem"><span class="num">01</span> The problem — why agents need passports</a></li>
+        <li><a href="#passport"><span class="num">02</span> What a passport actually is</a></li>
+        <li><a href="#permissions"><span class="num">03</span> Permissions — what can it do?</a></li>
+        <li><a href="#budget"><span class="num">04</span> Budget — how much can it spend?</a></li>
+        <li><a href="#expiry"><span class="num">05</span> Expiry — when does it stop working?</a></li>
+        <li><a href="#authorize"><span class="num">06</span> Authorization — the checkpoint</a></li>
+        <li><a href="#delegation"><span class="num">07</span> Delegation — agents hiring agents</a></li>
+        <li><a href="#revocation"><span class="num">08</span> Revocation — the kill switch</a></li>
+        <li><a href="#audit"><span class="num">09</span> Audit trail — receipts for everything</a></li>
+        <li><a href="#crypto"><span class="num">10</span> Tamper-proofing — why nobody can fake it</a></li>
+        <li><a href="#biscuit"><span class="num">11</span> Biscuit tokens — the advanced mode</a></li>
+        <li><a href="#server"><span class="num">12</span> The authority server</a></li>
+        <li><a href="#integrations"><span class="num">13</span> Where it plugs in</a></li>
+        <li><a href="#moat"><span class="num">14</span> Why this is hard to copy</a></li>
+      </ol>
+    </div>
+
+    <!-- ═══ 01 ═══ -->
+    <div class="section" id="problem">
+      <div class="section-num">01</div>
+      <h2>The problem</h2>
+      <p>You ask an AI agent to book you a flight. The agent has your full account access — your credit card, your email, your calendar, everything. It could book a $50 flight, or it could wire $10,000 to the Bahamas. Right now, <strong>there's nothing stopping it</strong>.</p>
+      <p>Today's agents use static API keys — the same credentials the human has. There's no way to say "you can read my calendar but not delete anything" or "you can spend up to $500 but not a cent more."</p>
+
+      <div class="analogy">
+        <div class="analogy-label">Real-world analogy</div>
+        Think of it like giving your house keys to a babysitter — but the keys also open your safe, start your car, and access your bank. You just wanted them to watch the kids.
+      </div>
+
+      <p>Agent Passport is the <strong>permission slip</strong>. It says exactly what the babysitter can do (watch kids, use the kitchen), what they can't (no car, no safe), and when it expires (when you get home).</p>
+    </div>
+
+    <!-- ═══ 02 ═══ -->
+    <div class="section" id="passport">
+      <div class="section-num">02</div>
+      <h2>What a passport actually is</h2>
+      <p>A passport is a <strong>signed digital token</strong> — a small piece of data that says:</p>
+
+      <div class="feat-grid">
+        <div class="feat-card">
+          <div class="feat-card-title">Who authorized it</div>
+          <div class="feat-card-desc">The human (or parent agent) that created this permission slip</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-title">Which agent holds it</div>
+          <div class="feat-card-desc">The specific bot or agent that's allowed to use it</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-title">What it can do</div>
+          <div class="feat-card-desc">A list of specific actions like "calendar:read" or "email:send"</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-title">How much it can spend</div>
+          <div class="feat-card-desc">A hard dollar cap the agent can never exceed</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-title">When it expires</div>
+          <div class="feat-card-desc">A timestamp after which the passport is dead</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-title">A unique ID + signature</div>
+          <div class="feat-card-desc">Cryptographic proof that nobody tampered with it</div>
+        </div>
+      </div>
+
+      <div class="code">
+        <span class="t-kw">const</span> <span class="t-prop">passport</span> = AgentPassport.<span class="t-fn">issue</span>({<br>
+        &nbsp;&nbsp;<span class="t-prop">agent</span>: <span class="t-str">"booking-bot"</span>,<br>
+        &nbsp;&nbsp;<span class="t-prop">permissions</span>: [<span class="t-str">"calendar:read"</span>, <span class="t-str">"calendar:write"</span>, <span class="t-str">"email:send"</span>],<br>
+        &nbsp;&nbsp;<span class="t-prop">limits</span>: { <span class="t-prop">maxSpend</span>: <span class="t-num">500</span> },<br>
+        &nbsp;&nbsp;<span class="t-prop">expiresIn</span>: <span class="t-str">"24h"</span>,<br>
+        })
+      </div>
+    </div>
+
+    <!-- ═══ 03 ═══ -->
+    <div class="section" id="permissions">
+      <div class="section-num">03</div>
+      <h2>Permissions</h2>
+      <p>Permissions use a simple <strong>namespace:action</strong> format. You list exactly what the agent can do.</p>
+      <p><code style="color:var(--seal)">calendar:read</code> — can read your calendar<br>
+         <code style="color:var(--seal)">calendar:write</code> — can create/edit events<br>
+         <code style="color:var(--seal)">calendar:*</code> — can do anything calendar-related (wildcard)<br>
+         <code style="color:var(--seal)">*</code> — can do literally everything (you almost never want this)</p>
+
+      <p>If an agent tries to do something <strong>not on its list</strong>, it gets denied instantly. No exceptions, no workarounds.</p>
+
+      <div class="code">
+        passport.<span class="t-fn">authorize</span>(<span class="t-str">"calendar:write"</span>)&nbsp;&nbsp;<span class="t-cmt">// ✓ allowed — it's on the list</span><br>
+        passport.<span class="t-fn">authorize</span>(<span class="t-str">"database:drop"</span>)&nbsp;&nbsp;<span class="t-cmt">// ✗ denied — not on the list</span>
+      </div>
+    </div>
+
+    <!-- ═══ 04 ═══ -->
+    <div class="section" id="budget">
+      <div class="section-num">04</div>
+      <h2>Budget</h2>
+      <p>Every passport can have a <strong>spending cap</strong>. The server tracks how much the agent has spent cumulatively — the agent can't lie about it because the tracking happens server-side.</p>
+
+      <div class="analogy">
+        <div class="analogy-label">Real-world analogy</div>
+        It's a prepaid debit card, not a credit card. When the balance hits zero, the card stops working. The agent can't call the bank and ask for more.
+      </div>
+
+      <p>If the agent tries to spend $200 but only has $150 remaining, the action is denied with a clear reason: <strong>"Spend $200 exceeds remaining limit $150 USD."</strong></p>
+    </div>
+
+    <!-- ═══ 05 ═══ -->
+    <div class="section" id="expiry">
+      <div class="section-num">05</div>
+      <h2>Expiry</h2>
+      <p>Every passport has an <strong>expiration timestamp</strong>. After that moment, the passport is dead — no amount of retrying will make it work.</p>
+      <p>Default is <strong>24 hours</strong>. You can set it to 5 minutes, 1 hour, 7 days — whatever fits the task. A child passport can never outlive its parent. If dad's passport expires at midnight, the kid's passport can't survive past midnight either.</p>
+    </div>
+
+    <!-- ═══ 06 ═══ -->
+    <div class="section" id="authorize">
+      <div class="section-num">06</div>
+      <h2>Authorization — the checkpoint</h2>
+      <p>Every time the agent wants to do something, it hits a <strong>six-step checkpoint</strong>:</p>
+
+      <div class="feat-grid">
+        <div class="feat-card">
+          <div class="feat-card-title">1. Signature check</div>
+          <div class="feat-card-desc">Is the passport real and untampered?</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-title">2. Revocation check</div>
+          <div class="feat-card-desc">Has anyone cancelled this passport?</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-title">3. Time check</div>
+          <div class="feat-card-desc">Is the passport still within its time window?</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-title">4. Permission check</div>
+          <div class="feat-card-desc">Is this action on the allowed list?</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-title">5. Spend check</div>
+          <div class="feat-card-desc">Is there enough budget left?</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-title">6. Audit log</div>
+          <div class="feat-card-desc">Record the attempt (allowed or denied)</div>
+        </div>
+      </div>
+
+      <p>If any step fails, the action is <strong>denied with a reason</strong>. If all pass, the action goes through. Either way, it's logged.</p>
+    </div>
+
+    <!-- ═══ 07 ═══ -->
+    <div class="section" id="delegation">
+      <div class="section-num">07</div>
+      <h2>Delegation — agents hiring agents</h2>
+      <p>This is the magic. An agent with a passport can <strong>create a child passport</strong> for a sub-agent — but with <strong>equal or fewer</strong> permissions. Never more.</p>
+
+      <div class="chain">
+        <div class="chain-node">
+          <strong>You</strong>
+          <small>calendar:* · email:* · $500</small>
+        </div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-node">
+          <strong>Travel Bot</strong>
+          <small>calendar:write · email:send · $500</small>
+        </div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-node">
+          <strong>Email Drafter</strong>
+          <small>email:send · $0</small>
+        </div>
+      </div>
+
+      <p>The travel bot can give the email drafter permission to send emails — but it <strong>cannot</strong> give it calendar access or spending power it doesn't have. Permissions only shrink down the chain, never grow. This is called <strong>monotonic narrowing</strong>.</p>
+
+      <div class="analogy">
+        <div class="analogy-label">Real-world analogy</div>
+        A manager can give an intern access to the filing cabinet — but not the CEO's office. You can only share what you already have, and you can share less, never more.
+      </div>
+
+      <div class="code">
+        <span class="t-kw">const</span> <span class="t-prop">child</span> = passport.<span class="t-fn">delegate</span>({<br>
+        &nbsp;&nbsp;<span class="t-prop">agent</span>: <span class="t-str">"email-drafter"</span>,<br>
+        &nbsp;&nbsp;<span class="t-prop">permissions</span>: [<span class="t-str">"email:send"</span>],&nbsp;&nbsp;<span class="t-cmt">// must be ⊆ parent</span><br>
+        })<br><br>
+        <span class="t-cmt">// trying to escalate → throws PassportDelegationError</span><br>
+        passport.<span class="t-fn">delegate</span>({ <span class="t-prop">permissions</span>: [<span class="t-str">"admin:delete"</span>] }) <span class="t-cmt">// ✗ error</span>
+      </div>
+    </div>
+
+    <!-- ═══ 08 ═══ -->
+    <div class="section" id="revocation">
+      <div class="section-num">08</div>
+      <h2>Revocation — the kill switch</h2>
+      <p>You can <strong>cancel any passport at any time</strong>. The moment you do, that passport and <strong>every child passport it ever created</strong> dies instantly.</p>
+
+      <div class="chain">
+        <div class="chain-node">
+          <strong>Root passport</strong>
+          <small style="color:var(--deny)">REVOKED</small>
+        </div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-node" style="opacity: 0.4;">
+          <strong>Travel Bot</strong>
+          <small style="color:var(--deny)">dead</small>
+        </div>
+        <span class="chain-arrow" style="opacity:0.4">→</span>
+        <div class="chain-node" style="opacity: 0.4;">
+          <strong>Email Drafter</strong>
+          <small style="color:var(--deny)">dead</small>
+        </div>
+      </div>
+
+      <p>This is <strong>cascade revocation</strong>. You don't need to hunt down every sub-agent and cancel them one by one. Kill the root, and the entire tree falls.</p>
+
+      <div class="code">
+        passport.<span class="t-fn">revoke</span>()<br>
+        <span class="t-cmt">// → ["pp_root", "pp_travel", "pp_email"] all revoked</span>
+      </div>
+    </div>
+
+    <!-- ═══ 09 ═══ -->
+    <div class="section" id="audit">
+      <div class="section-num">09</div>
+      <h2>Audit trail — receipts for everything</h2>
+      <p>Every single authorize() call is logged — whether it was allowed or denied. The audit trail records:</p>
+      <p><strong>When</strong> it happened · <strong>Which passport</strong> was used · <strong>What action</strong> was attempted · <strong>Whether it was allowed or denied</strong> · <strong>Why</strong> it was denied</p>
+
+      <div class="analogy">
+        <div class="analogy-label">Real-world analogy</div>
+        A security camera that records every door someone tries to open — including the locked ones they couldn't get through.
+      </div>
+
+      <p>When you're using the authority server, audit logs are persisted in SQLite so they survive restarts. You can query them by passport ID to see everything that agent ever tried to do.</p>
+    </div>
+
+    <!-- ═══ 10 ═══ -->
+    <div class="section" id="crypto">
+      <div class="section-num">10</div>
+      <h2>Tamper-proofing</h2>
+      <p>Every passport is signed with <strong>Ed25519</strong> — the same cryptographic algorithm used to secure SSH connections and cryptocurrency wallets. If anyone changes even a single character in the passport, the signature breaks and it's rejected.</p>
+
+      <div class="feat-grid">
+        <div class="feat-card">
+          <div class="feat-card-title">Can't forge permissions</div>
+          <div class="feat-card-desc">An agent can't edit its own passport to add "admin:delete"</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-title">Can't extend expiry</div>
+          <div class="feat-card-desc">Changing the expiration breaks the signature</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-title">Can't inflate budget</div>
+          <div class="feat-card-desc">Spend tracking is server-side anyway, but the limit is signed too</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-title">Can't replay old passports</div>
+          <div class="feat-card-desc">Each passport has a unique 128-bit nonce</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 11 ═══ -->
+    <div class="section" id="biscuit">
+      <div class="section-num">11</div>
+      <h2>Biscuit tokens — the advanced mode</h2>
+      <p>For simple single-agent setups, passports use <strong>JWT</strong> (JSON Web Tokens) — the same standard used by most web apps. Simple, well-understood, battle-tested.</p>
+      <p>For <strong>multi-agent delegation chains</strong>, passports use <strong>Biscuit tokens</strong>. Biscuits are a newer token format with a superpower: <strong>Datalog policies</strong>.</p>
+
+      <div class="analogy">
+        <div class="analogy-label">What's Datalog?</div>
+        A tiny logic language embedded inside the token itself. Instead of just listing permissions, you can write rules like "allow calendar:write only if spend is under $100 and it's a weekday." The rules travel with the token and are enforced at every checkpoint.
+      </div>
+
+      <p>When an agent delegates to a sub-agent using Biscuit mode, the child's restrictions are <strong>appended to the token cryptographically</strong> — the parent's rules can never be removed, only added to. This is how monotonic narrowing is enforced at the protocol level, not just the application level.</p>
+    </div>
+
+    <!-- ═══ 12 ═══ -->
+    <div class="section" id="server">
+      <div class="section-num">12</div>
+      <h2>The authority server</h2>
+      <p>The SDK works locally for development, but for production you want a <strong>central authority</strong> — a server that issues passports, tracks spending, persists revocations, and stores audit logs.</p>
+
+      <div class="feat-grid">
+        <div class="feat-card">
+          <div class="feat-card-title">REST API</div>
+          <div class="feat-card-desc">Issue, verify, authorize, revoke, introspect — all over HTTP</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-title">SQLite storage</div>
+          <div class="feat-card-desc">Passports, revocations, audit logs, spend tracking persisted to disk</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-title">Token introspection</div>
+          <div class="feat-card-desc">RFC 7662-compliant endpoint: is this token active? What's left on the budget?</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-title">One command</div>
+          <div class="feat-card-desc">npx @passport-agent/server starts a local authority server</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 13 ═══ -->
+    <div class="section" id="integrations">
+      <div class="section-num">13</div>
+      <h2>Where it plugs in</h2>
+      <p>Agent Passport isn't a standalone tool — it's a layer that <strong>drops into frameworks you already use</strong>. One import, a few lines of config, and every action is passport-checked.</p>
+
+      <div class="int-list">
+        <div class="int-item"><strong>MCP</strong> <span>— guards every tool call in your MCP server</span></div>
+        <div class="int-item"><strong>Express</strong> <span>— middleware that maps routes to permissions</span></div>
+        <div class="int-item"><strong>Fastify</strong> <span>— plugin with automatic action extraction</span></div>
+        <div class="int-item"><strong>Next.js</strong> <span>— API route middleware for server actions</span></div>
+        <div class="int-item"><strong>LangChain</strong> <span>— wrap any tool with passport checks</span></div>
+        <div class="int-item"><strong>CrewAI</strong> <span>— decorator that guards all task execution</span></div>
+        <div class="int-item"><strong>A2A</strong> <span>— Agent Card extensions for cross-agent auth</span></div>
+        <div class="int-item"><strong>Authority</strong> <span>— self-hosted REST server with SQLite</span></div>
+      </div>
+
+      <p>For HTTP middleware (Express, Fastify, Next.js), the passport is extracted from the <code style="color:var(--seal)">x-agent-passport</code> header. The action is auto-derived from the HTTP method + path: <code style="color:var(--muted)">POST /api/users</code> becomes <code style="color:var(--muted)">api:users:post</code>.</p>
+    </div>
+
+    <!-- ═══ 14 ═══ -->
+    <div class="section" id="moat">
+      <div class="section-num">14</div>
+      <h2>Why this is hard to copy</h2>
+      <p>Open source doesn't mean no moat. Here's what compounds over time:</p>
+
+      <div class="feat-grid">
+        <div class="feat-card">
+          <div class="feat-card-title">Protocol standard</div>
+          <div class="feat-card-desc">First-mover on the authorization gap between agent identity and action. Defining the spec others build against.</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-title">Network effects</div>
+          <div class="feat-card-desc">Every agent using passports makes every service want to accept them. Two-sided, winner-take-most.</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-title">Integration surface</div>
+          <div class="feat-card-desc">8 packages across MCP, LangChain, CrewAI, Express, etc. Once teams wire it in, they don't rip it out.</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-title">Audit trail gravity</div>
+          <div class="feat-card-desc">The authority server accumulates action history. Compliance teams won't let you migrate away from it.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-cta">
+      <h2>Ready to try it?</h2>
+      <p>Ten lines to production. No vendor lock-in.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <a href="https://github.com/priyansh-x/agent-passport" class="btn btn-primary" target="_blank" rel="noopener">View on GitHub</a>
+        <a href="/index-v2.html" class="btn btn-ghost">Back to home</a>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
