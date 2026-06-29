@@ -21,9 +21,13 @@
     "dist"
   ],
   "license": "MIT",
+  "keywords": ["agent", "passport", "authorization", "delegation", "ai", "mcp", "security", "ed25519"],
+  "engines": {
+    "node": ">=18"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/priyansh-x/passport-agent",
+    "url": "https://github.com/priyansh-x/agent-passport",
     "directory": "packages/core"
   },
   "devDependencies": {

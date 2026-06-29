@@ -17,10 +17,14 @@
     "lint": "tsc --noEmit"
   },
   "files": ["dist"],
+  "keywords": ["agent", "passport", "langchain", "ai", "authorization"],
+  "engines": {
+    "node": ">=18"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/priyansh-x/passport-agent",
+    "url": "https://github.com/priyansh-x/agent-passport",
     "directory": "packages/langchain"
   },
   "dependencies": {
