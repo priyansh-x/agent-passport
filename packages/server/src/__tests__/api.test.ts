@@ -275,6 +275,24 @@ describe('Passport Authority API', () => {
     });
   });
 
+  describe('GET /v1/stats', () => {
+    it('returns aggregate stats', async () => {
+      await req('POST', '/v1/passports', {
+        principal: 'user:alice@test.com',
+        agent: 'agent:bot',
+        permissions: ['read'],
+        limits: { maxSpend: 100 },
+      });
+
+      const res = await req('GET', '/v1/stats');
+      const data = await res.json();
+      expect(data.passports.total).toBe(1);
+      expect(data.passports.active).toBe(1);
+      expect(data.authorizations.total).toBe(0);
+      expect(data.delegations).toBe(0);
+    });
+  });
+
   describe('GET /health', () => {
     it('returns ok', async () => {
       const res = await req('GET', '/health');

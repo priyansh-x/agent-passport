@@ -157,6 +157,23 @@ export class PassportDB {
     return revoked;
   }
 
+  getStats() {
+    const totalPassports = (this.db.prepare('SELECT COUNT(*) as c FROM passports').get() as { c: number }).c;
+    const activePassports = totalPassports - (this.db.prepare('SELECT COUNT(*) as c FROM revocations').get() as { c: number }).c;
+    const totalAuthorizations = (this.db.prepare('SELECT COUNT(*) as c FROM audit_log').get() as { c: number }).c;
+    const allowedAuthorizations = (this.db.prepare('SELECT COUNT(*) as c FROM audit_log WHERE allowed = 1').get() as { c: number }).c;
+    const deniedAuthorizations = totalAuthorizations - allowedAuthorizations;
+    const totalSpent = (this.db.prepare('SELECT COALESCE(SUM(spent), 0) as s FROM spend_tracking').get() as { s: number }).s;
+    const delegationCount = (this.db.prepare('SELECT COUNT(*) as c FROM delegation_tree').get() as { c: number }).c;
+
+    return {
+      passports: { total: totalPassports, active: activePassports, revoked: totalPassports - activePassports },
+      authorizations: { total: totalAuthorizations, allowed: allowedAuthorizations, denied: deniedAuthorizations },
+      spend: { total: totalSpent },
+      delegations: delegationCount,
+    };
+  }
+
   close() {
     this.db.close();
   }

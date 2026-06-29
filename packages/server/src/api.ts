@@ -217,6 +217,10 @@ export function createApi(issuer: PassportIssuer, db: PassportDB, options: ApiOp
     return c.json({ entries });
   });
 
+  app.get('/v1/stats', (c) => {
+    return c.json(db.getStats());
+  });
+
   app.get('/v1/passports/:id/token', (c) => {
     const row = db.getPassport(c.req.param('id'));
     if (!row) return c.json({ error: 'Passport not found' }, 404);
