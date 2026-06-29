@@ -19,6 +19,7 @@ export { mergePassports, type MergedContext } from './merge.js';
 export { checkConstraints, checkTimeConstraint, checkDayConstraint, type Constraints, type TimeConstraint, type DayConstraint } from './constraints.js';
 export { authorizeBatch, type BatchAction, type BatchResult } from './batch.js';
 export { and, or, not, hasPermission, maxSpendBelow, isAgent, isPrincipal, notExpiredWithin, type ConditionFn } from './condition.js';
+export { toBase64Url, fromBase64Url, encodePayload, decodePayload } from './encoding.js';
 export type {
   Permission,
   SpendLimit,
