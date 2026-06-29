@@ -13,6 +13,7 @@ export { PolicyBuilder, policy, type PolicyCheck, type PolicyContext, type Polic
 export { inspectPassport, printInspection, type InspectionReport } from './inspector.js';
 export { validateChain, type ChainLink, type ChainValidation } from './chain.js';
 export { TEMPLATES, fromTemplate, type PassportTemplate } from './templates.js';
+export { redactPassport, type RedactOptions } from './redact.js';
 export type {
   Permission,
   SpendLimit,
