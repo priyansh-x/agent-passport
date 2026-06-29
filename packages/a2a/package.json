@@ -1,6 +1,6 @@
 {
   "name": "@passport-agent/a2a",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A2A protocol integration for Agent Passport — Agent Card extensions for passport requirements",
   "type": "module",
   "main": "dist/index.js",

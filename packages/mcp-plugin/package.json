@@ -1,6 +1,6 @@
 {
   "name": "@passport-agent/mcp",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "MCP middleware for Agent Passport — protect tool calls with passport authorization",
   "type": "module",
   "main": "dist/index.js",

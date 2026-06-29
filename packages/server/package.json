@@ -1,6 +1,6 @@
 {
   "name": "@passport-agent/server",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Local passport authority server for development",
   "type": "module",
   "main": "dist/index.js",

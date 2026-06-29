@@ -1,6 +1,6 @@
 {
   "name": "@passport-agent/crewai",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "CrewAI integration for Agent Passport — inject passport authorization into agent lifecycles",
   "type": "module",
   "main": "dist/index.js",

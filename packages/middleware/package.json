@@ -1,6 +1,6 @@
 {
   "name": "@passport-agent/middleware",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Express, Fastify, and Next.js middleware for passport-agent",
   "type": "module",
   "main": "dist/index.js",

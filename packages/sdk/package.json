@@ -1,6 +1,6 @@
 {
   "name": "@passport-agent/sdk",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "The Stripe for agent authorization — give every AI agent a cryptographically verifiable passport",
   "type": "module",
   "main": "dist/index.js",

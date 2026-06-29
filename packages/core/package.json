@@ -1,6 +1,6 @@
 {
   "name": "@passport-agent/core",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Core protocol engine for Agent Passport — token creation, validation, and policy enforcement",
   "type": "module",
   "main": "dist/index.js",
