@@ -7,6 +7,7 @@ export { generateKeyPair, sign, verify, toHex, fromHex } from './crypto.js';
 export { serializePassport, deserializePassport } from './token.js';
 export { ScopeRegistry, createDefaultRegistry, DEFAULT_SCOPES, type ScopeDefinition } from './scopes.js';
 export { validatePassport, type ValidationResult } from './validator.js';
+export { diffPassports, type PassportDiff } from './diff.js';
 export type {
   Permission,
   SpendLimit,
