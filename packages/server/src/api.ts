@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { PassportIssuer } from '@passport-agent/core';
+import { PassportIssuer, serializePassport } from '@passport-agent/core';
 import { PassportDB } from './db.js';
 import { rateLimiter } from './rate-limit.js';
 import { WebhookManager } from './webhooks.js';
@@ -215,6 +215,18 @@ export function createApi(issuer: PassportIssuer, db: PassportDB, options: ApiOp
     const limit = parseInt(c.req.query('limit') ?? '50');
     const entries = db.getRecentAudit(limit);
     return c.json({ entries });
+  });
+
+  app.get('/v1/passports/:id/token', (c) => {
+    const row = db.getPassport(c.req.param('id'));
+    if (!row) return c.json({ error: 'Passport not found' }, 404);
+
+    const signed = {
+      payload: JSON.parse(row.payload),
+      signature: row.signature,
+      publicKey: row.public_key,
+    };
+    return c.json({ token: serializePassport(signed) });
   });
 
   // Webhook management

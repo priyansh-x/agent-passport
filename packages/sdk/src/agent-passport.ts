@@ -1,5 +1,5 @@
 import type { SignedPassport, AuthorizeResult, AuditEntry } from '@passport-agent/core';
-import { PassportIssuer } from '@passport-agent/core';
+import { PassportIssuer, serializePassport, deserializePassport } from '@passport-agent/core';
 import { getDefaultAuthority } from './authority.js';
 
 export interface IssueConfig {
@@ -96,6 +96,22 @@ export class AgentPassport {
 
   get auditLog(): AuditEntry[] {
     return this.issuer.audit.getByPassport(this.id);
+  }
+
+  toToken(): string {
+    return serializePassport(this.signed);
+  }
+
+  static fromToken(token: string, issuer?: PassportIssuer): AgentPassport {
+    const authority = issuer ?? getDefaultAuthority();
+    const signed = deserializePassport(token);
+    if (!authority.verifySignature(signed)) {
+      throw new Error('Invalid passport token: signature verification failed');
+    }
+    if (signed.publicKey !== authority.publicKey) {
+      throw new Error('Invalid passport token: signed by unknown authority');
+    }
+    return new AgentPassport(signed, authority);
   }
 
   toJSON() {

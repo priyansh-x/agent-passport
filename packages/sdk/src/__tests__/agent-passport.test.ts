@@ -114,6 +114,44 @@ describe('AgentPassport SDK', () => {
     });
   });
 
+  describe('token serialization', () => {
+    it('round-trips through toToken/fromToken', () => {
+      const issuer = new PassportIssuer();
+      const passport = AgentPassport.issue(
+        {
+          principal: 'user:alice@test.com',
+          agent: 'agent:bot',
+          permissions: ['read'],
+        },
+        issuer,
+      );
+
+      const token = passport.toToken();
+      expect(token).toMatch(/^ap1\./);
+
+      const restored = AgentPassport.fromToken(token, issuer);
+      expect(restored.id).toBe(passport.id);
+      expect(restored.principal).toBe('user:alice@test.com');
+      expect(restored.agent).toBe('agent:bot');
+    });
+
+    it('rejects tokens signed by a different issuer', () => {
+      const issuer1 = new PassportIssuer();
+      const issuer2 = new PassportIssuer();
+      const passport = AgentPassport.issue(
+        {
+          principal: 'user:alice@test.com',
+          agent: 'agent:bot',
+          permissions: ['read'],
+        },
+        issuer1,
+      );
+
+      const token = passport.toToken();
+      expect(() => AgentPassport.fromToken(token, issuer2)).toThrow('unknown authority');
+    });
+  });
+
   describe('audit', () => {
     it('records all authorize calls', () => {
       const { passport } = createWithIssuer();
