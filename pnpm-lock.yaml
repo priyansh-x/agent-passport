@@ -18,6 +18,19 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
+  examples/advanced:
+    dependencies:
+      '@passport-agent/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@passport-agent/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+    devDependencies:
+      tsx:
+        specifier: ^4.19.0
+        version: 4.22.4
+
   examples/basic:
     dependencies:
       '@passport-agent/core':
