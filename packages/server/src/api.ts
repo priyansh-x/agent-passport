@@ -3,12 +3,15 @@ import { cors } from 'hono/cors';
 import { PassportIssuer } from '@passport-agent/core';
 import { PassportDB } from './db.js';
 import { rateLimiter } from './rate-limit.js';
+import { WebhookManager } from './webhooks.js';
 
 export interface ApiOptions {
   cors?: boolean;
+  webhooks?: WebhookManager;
 }
 
 export function createApi(issuer: PassportIssuer, db: PassportDB, options: ApiOptions = {}) {
+  const webhooks = options.webhooks ?? new WebhookManager();
   const app = new Hono();
 
   if (options.cors) {
@@ -48,6 +51,8 @@ export function createApi(issuer: PassportIssuer, db: PassportDB, options: ApiOp
       passport.signature,
       passport.publicKey,
     );
+
+    webhooks.emit('passport.issued', { id: passport.payload.id, principal: body.principal, agent: body.agent });
 
     return c.json({ passport: passport.payload, id: passport.payload.id }, 201);
   });
@@ -141,6 +146,10 @@ export function createApi(issuer: PassportIssuer, db: PassportDB, options: ApiOp
       timestamp: Date.now(),
     });
 
+    webhooks.emit(result.allowed ? 'passport.authorized' : 'passport.denied', {
+      id, action: body.action, allowed: result.allowed, reason: result.reason,
+    });
+
     return c.json({
       ...result,
       spent: currentSpent + (result.allowed ? spendAmount : 0),
@@ -178,6 +187,8 @@ export function createApi(issuer: PassportIssuer, db: PassportDB, options: ApiOp
       // Persist delegation relationship for cascade revocation
       db.registerChild(id, child.payload.id);
 
+      webhooks.emit('passport.delegated', { parentId: id, childId: child.payload.id, agent: body.agent });
+
       return c.json({ passport: child.payload, id: child.payload.id }, 201);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -191,6 +202,7 @@ export function createApi(issuer: PassportIssuer, db: PassportDB, options: ApiOp
     const revoked = db.cascadeRevoke(id);
     // Also update in-memory state
     issuer.revoke(id);
+    webhooks.emit('passport.revoked', { id, cascadeCount: revoked.length, revoked });
     return c.json({ revoked });
   });
 
@@ -203,6 +215,32 @@ export function createApi(issuer: PassportIssuer, db: PassportDB, options: ApiOp
     const limit = parseInt(c.req.query('limit') ?? '50');
     const entries = db.getRecentAudit(limit);
     return c.json({ entries });
+  });
+
+  // Webhook management
+  app.get('/v1/webhooks', (c) => {
+    return c.json({ webhooks: webhooks.list() });
+  });
+
+  app.post('/v1/webhooks', async (c) => {
+    const body = await c.req.json<{
+      url: string;
+      events: string[];
+      secret?: string;
+    }>();
+
+    if (!body.url || !body.events?.length) {
+      return c.json({ error: 'url and events are required' }, 400);
+    }
+
+    const sub = webhooks.subscribe(body.url, body.events as import('./webhooks.js').WebhookEvent[], body.secret);
+    return c.json({ webhook: sub }, 201);
+  });
+
+  app.delete('/v1/webhooks/:id', (c) => {
+    const removed = webhooks.unsubscribe(c.req.param('id'));
+    if (!removed) return c.json({ error: 'Webhook not found' }, 404);
+    return c.json({ ok: true });
   });
 
   return app;

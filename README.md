@@ -1,4 +1,18 @@
 <p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/Agent_Passport-white?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTIgMkw0IDZ2NmMwIDUuNTUgMy44NCAxMC43NCAxMiAxMiA4LjE2LTEuMjYgMTItNi40NSAxMi0xMlY2TDEyIDJ6IiBmaWxsPSIjMEQ5NDg4Ii8+PC9zdmc+"/>
+    <img src="https://img.shields.io/badge/Agent_Passport-black?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTIgMkw0IDZ2NmMwIDUuNTUgMy44NCAxMC43NCAxMiAxMiA4LjE2LTEuMjYgMTItNi40NSAxMi0xMlY2TDEyIDJ6IiBmaWxsPSIjMEQ5NDg4Ii8+PC9zdmc+" alt="Agent Passport"/>
+  </picture>
+</p>
+
+<p align="center">
+  <strong>Cryptographic authorization for AI agents.</strong><br/>
+  Scoped permissions · Spend limits · Delegation chains · Instant revocation<br/>
+  <em>The missing authorization layer between humans and autonomous agents.</em>
+</p>
+
+<p align="center">
+  <a href="https://github.com/priyansh-x/agent-passport/actions"><img src="https://img.shields.io/github/actions/workflow/status/priyansh-x/agent-passport/ci.yml?style=flat-square&label=CI" alt="CI" /></a>
   <img src="https://img.shields.io/badge/protocol-v0.1-blue?style=flat-square" alt="Protocol v0.1" />
   <img src="https://img.shields.io/npm/v/@passport-agent/core?style=flat-square&color=black" alt="npm" />
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License" />
@@ -6,12 +20,8 @@
   <img src="https://img.shields.io/badge/tokens-Biscuit%20%2B%20JWT-orange?style=flat-square" alt="Biscuit + JWT" />
 </p>
 
-<h1 align="center">Agent Passport</h1>
-
 <p align="center">
-  <strong>Cryptographic authorization for AI agents.</strong><br/>
-  Scoped permissions. Spend limits. Delegation chains. Instant revocation.<br/>
-  <em>The missing authorization layer between humans and autonomous agents.</em>
+  <a href="#10-lines-to-production">Quickstart</a> · <a href="https://priyansh-x.github.io/agent-passport/docs">Docs</a> · <a href="#packages">Packages</a> · <a href="#architecture">Architecture</a> · <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
 <br/>
@@ -269,6 +279,10 @@ curl localhost:3100/v1/passports/{id}/audit
 - **Not a blockchain** — just cryptography where it matters
 
 Agent Passport answers one question: **"Is this agent allowed to do this specific thing, right now, within these limits?"**
+
+## Documentation
+
+Full documentation is available at [priyansh-x.github.io/agent-passport/docs](https://priyansh-x.github.io/agent-passport/docs) — covers installation, permissions model, delegation chains, spend limits, framework integrations, API reference, and the protocol spec.
 
 ## Contributing
 
