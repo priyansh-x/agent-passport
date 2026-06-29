@@ -1,4 +1,4 @@
-import { PassportIssuer, type SignedPassport, type AuthorizeResult } from '@passport-agent/core';
+import { PassportIssuer, deserializePassport, type SignedPassport, type AuthorizeResult } from '@passport-agent/core';
 
 export interface MiddlewareConfig {
   issuer: PassportIssuer;
@@ -20,16 +20,20 @@ export function parsePassportHeader(
   issuer: PassportIssuer,
 ): SignedPassport | null {
   if (!header) return null;
-  try {
-    const parsed = JSON.parse(header);
-    if (parsed.payload && parsed.signature && parsed.publicKey) {
-      if (issuer.verifySignature(parsed)) {
-        return parsed;
-      }
-    }
-  } catch {
-    // not valid JSON passport
+  const value = header.startsWith('Bearer ') ? header.slice(7) : header;
+  if (value.startsWith('ap1.')) {
+    try {
+      const passport = deserializePassport(value);
+      if (issuer.verifySignature(passport)) return passport;
+    } catch { /* invalid token */ }
+    return null;
   }
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed.payload && parsed.signature && parsed.publicKey) {
+      if (issuer.verifySignature(parsed)) return parsed;
+    }
+  } catch { /* not valid JSON passport */ }
   return null;
 }
 
