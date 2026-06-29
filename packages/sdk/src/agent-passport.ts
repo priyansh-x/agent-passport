@@ -1,6 +1,7 @@
 import type { SignedPassport, AuthorizeResult, AuditEntry } from '@passport-agent/core';
 import { PassportIssuer, serializePassport, deserializePassport } from '@passport-agent/core';
 import { getDefaultAuthority } from './authority.js';
+import { passportEvents } from './events.js';
 
 export interface IssueConfig {
   principal: string;
@@ -41,14 +42,24 @@ export class AgentPassport {
   authorize(action: string, spendAmount = 0): AuthorizeResult {
     const result = this.issuer.authorize(this.signed, action, spendAmount);
     if (!result.allowed) {
-      const err = new PassportDeniedError(action, result.reason ?? 'Unknown reason', this.id);
-      throw err;
+      passportEvents.emit('authorize:denied', { passportId: this.id, action, reason: result.reason ?? 'Unknown reason' });
+      passportEvents.emit('authorize', { passportId: this.id, action, allowed: false, reason: result.reason });
+      throw new PassportDeniedError(action, result.reason ?? 'Unknown reason', this.id);
+    }
+    passportEvents.emit('authorize', { passportId: this.id, action, allowed: true });
+    if (spendAmount > 0) {
+      passportEvents.emit('spend', { passportId: this.id, amount: spendAmount, remaining: 0 });
     }
     return result;
   }
 
   tryAuthorize(action: string, spendAmount = 0): AuthorizeResult {
-    return this.issuer.authorize(this.signed, action, spendAmount);
+    const result = this.issuer.authorize(this.signed, action, spendAmount);
+    passportEvents.emit('authorize', { passportId: this.id, action, allowed: result.allowed, reason: result.reason });
+    if (!result.allowed) {
+      passportEvents.emit('authorize:denied', { passportId: this.id, action, reason: result.reason ?? 'Unknown reason' });
+    }
+    return result;
   }
 
   delegate(config: DelegateConfig): AgentPassport {
@@ -59,7 +70,9 @@ export class AgentPassport {
         limits: config.limits,
         expiresIn: config.expiresIn,
       });
-      return new AgentPassport(childSigned, this.issuer);
+      const child = new AgentPassport(childSigned, this.issuer);
+      passportEvents.emit('delegate', { parentId: this.id, childId: child.id, agent: config.agent });
+      return child;
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       throw new PassportDelegationError(config.agent, msg, this.id);
@@ -67,7 +80,9 @@ export class AgentPassport {
   }
 
   revoke(): string[] {
-    return this.issuer.revoke(this.id);
+    const revoked = this.issuer.revoke(this.id);
+    passportEvents.emit('revoke', { passportId: this.id, count: revoked.length });
+    return revoked;
   }
 
   get id(): string {
