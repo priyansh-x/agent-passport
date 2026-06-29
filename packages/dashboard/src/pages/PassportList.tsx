@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api, type PassportData } from '../lib/api'
 import { Shield, ShieldOff, Clock, User, ChevronRight, ChevronDown, Copy, Check, GitBranch } from 'lucide-react'
 import { StatsOverview } from '../components/StatsOverview'
@@ -9,6 +10,7 @@ interface PassportWithStatus {
 }
 
 export function PassportList() {
+  const navigate = useNavigate()
   const [passports, setPassports] = useState<PassportWithStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -204,15 +206,23 @@ export function PassportList() {
             {/* Expanded Detail Panel */}
             {isExpanded && (
               <div className={`rounded-b-xl border border-t-0 border-neutral-200 bg-neutral-50 px-5 py-4 space-y-4 ${!active ? 'opacity-60' : ''}`}>
-                {/* Full ID */}
-                <div>
-                  <div className="text-xs text-neutral-400 mb-1">Passport ID</div>
-                  <div className="flex items-center gap-2">
-                    <code className="text-xs font-mono text-neutral-600 bg-white px-2 py-1 rounded border border-neutral-200 flex-1 break-all">{p.id}</code>
-                    <button onClick={(e) => { e.stopPropagation(); copyId(p.id); }} className="p-1.5 text-neutral-400 hover:text-neutral-600 cursor-pointer">
-                      {copied === p.id ? <Check size={13} /> : <Copy size={13} />}
-                    </button>
+                {/* Full ID + View Details */}
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="text-xs text-neutral-400 mb-1">Passport ID</div>
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs font-mono text-neutral-600 bg-white px-2 py-1 rounded border border-neutral-200 flex-1 break-all">{p.id}</code>
+                      <button onClick={(e) => { e.stopPropagation(); copyId(p.id); }} className="p-1.5 text-neutral-400 hover:text-neutral-600 cursor-pointer">
+                        {copied === p.id ? <Check size={13} /> : <Copy size={13} />}
+                      </button>
+                    </div>
                   </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); navigate(`/passports/${p.id}`); }}
+                    className="text-xs px-3 py-1.5 rounded-lg bg-neutral-900 text-white hover:bg-neutral-800 transition-colors cursor-pointer ml-3 mt-4"
+                  >
+                    View Details →
+                  </button>
                 </div>
 
                 {/* Details Grid */}

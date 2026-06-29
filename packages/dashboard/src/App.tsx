@@ -4,6 +4,7 @@ import { PassportList } from './pages/PassportList'
 import { AuditLog } from './pages/AuditLog'
 import { ConsentScreen } from './pages/ConsentScreen'
 import { Settings } from './pages/Settings'
+import { PassportDetail } from './pages/PassportDetail'
 
 function NavItem({ to, icon: Icon, label }: { to: string; icon: typeof LayoutDashboard; label: string }) {
   return (
@@ -59,6 +60,7 @@ export default function App() {
 
         <Routes>
           <Route path="/" element={<PassportList />} />
+          <Route path="/passports/:id" element={<PassportDetail />} />
           <Route path="/audit" element={<AuditLog />} />
           <Route path="/consent" element={<ConsentScreen />} />
           <Route path="/settings" element={<Settings />} />

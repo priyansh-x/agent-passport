@@ -65,4 +65,35 @@ export const api = {
       spend: { total: number };
       delegations: number;
     }>('/stats'),
+
+  getTree: (id: string) =>
+    request<TreeNode>(`/passports/${id}/tree`),
+
+  getValidation: (id: string) =>
+    request<{ valid: boolean; errors: string[]; warnings: string[] }>(`/passports/${id}/validate`),
+
+  getToken: (id: string) =>
+    request<{ token: string }>(`/passports/${id}/token`),
+
+  getIntrospection: (id: string) =>
+    request<{
+      active: boolean;
+      id: string;
+      sub: string;
+      principal: string;
+      permissions: { action: string }[];
+      limits: { maxSpend: number; currency: string; spent: number; remaining: number };
+      revoked: boolean;
+      expired: boolean;
+      parentId: string | null;
+    }>(`/passports/${id}/introspect`, { method: 'POST' }),
 };
+
+export interface TreeNode {
+  id: string;
+  agent: string;
+  permissions: string[];
+  maxSpend: number;
+  revoked: boolean;
+  children: TreeNode[];
+}
