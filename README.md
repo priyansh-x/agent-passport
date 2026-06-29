@@ -261,6 +261,47 @@ curl localhost:3100/v1/passports/{id}/audit
 | [`@passport-agent/crewai`](https://www.npmjs.com/package/@passport-agent/crewai) | CrewAI agent decorator |
 | [`@passport-agent/a2a`](https://www.npmjs.com/package/@passport-agent/a2a) | A2A Agent Card extensions |
 
+## Fluent Builder API
+
+```typescript
+import { passport } from '@passport-agent/sdk';
+
+const p = passport()
+  .for('user:alice@company.com')
+  .agent('agent:finance-bot')
+  .allow('invoices:read', 'invoices:create', 'payment:charge')
+  .budget(1000, 'USD')
+  .expiresInHours(8)
+  .build();
+```
+
+## Token Serialization
+
+Passports serialize to compact `ap1.*` tokens for transport:
+
+```typescript
+const token = p.toToken();
+// "ap1.eyJpZCI6Ij..." (base64url-encoded)
+
+const restored = AgentPassport.fromToken(token, issuer);
+```
+
+## Custom Policy Engine
+
+```typescript
+import { policy } from '@passport-agent/core';
+
+const authorize = policy()
+  .requirePermission()
+  .requireNotExpired()
+  .requireBudget()
+  .denyActions('admin:delete')
+  .timeWindow(9, 17) // Business hours only (UTC)
+  .build();
+
+authorize(passport.payload, 'invoices:read'); // { allowed: true }
+```
+
 ## Security Model
 
 | Property | Guarantee |
@@ -271,6 +312,8 @@ curl localhost:3100/v1/passports/{id}/audit
 | **Replay protection** | 128-bit nonce per passport |
 | **Budget enforcement** | Server-side spend tracking (clients can't lie about spending) |
 | **Time-bound** | Automatic expiration, child can't outlive parent |
+| **Depth-limited** | Max 10-level delegation chains, max 50 permissions per passport |
+| **Rate-limited** | Built-in sliding-window rate limiter on the authority server |
 
 ## What Agent Passport Is NOT
 
