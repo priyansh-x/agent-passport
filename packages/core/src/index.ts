@@ -10,6 +10,7 @@ export { validatePassport, type ValidationResult } from './validator.js';
 export { diffPassports, type PassportDiff } from './diff.js';
 export { formatPassport, formatPassportTable } from './format.js';
 export { PolicyBuilder, policy, type PolicyCheck, type PolicyContext, type PolicyDecision } from './policy-builder.js';
+export { inspectPassport, printInspection, type InspectionReport } from './inspector.js';
 export type {
   Permission,
   SpendLimit,
