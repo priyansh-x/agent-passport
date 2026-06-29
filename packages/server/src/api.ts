@@ -8,6 +8,7 @@ import { requestLogger, type LoggerOptions } from './logger.js';
 import { getOpenApiSpec } from './openapi.js';
 import { checkHealth } from './health.js';
 import { getPrometheusMetrics } from './metrics.js';
+import { exportAll } from './export.js';
 
 export interface ApiOptions {
   cors?: boolean;
@@ -263,6 +264,10 @@ export function createApi(issuer: PassportIssuer, db: PassportDB, options: ApiOp
 
   app.get('/v1/stats', (c) => {
     return c.json(db.getStats());
+  });
+
+  app.get('/v1/export', (c) => {
+    return c.json(exportAll(db));
   });
 
   app.get('/v1/passports/:id/tree', (c) => {
