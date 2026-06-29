@@ -221,6 +221,29 @@ export function createApi(issuer: PassportIssuer, db: PassportDB, options: ApiOp
     return c.json(db.getStats());
   });
 
+  app.get('/v1/passports/:id/tree', (c) => {
+    const id = c.req.param('id');
+    const row = db.getPassport(id);
+    if (!row) return c.json({ error: 'Passport not found' }, 404);
+
+    function buildNode(nodeId: string): Record<string, unknown> | null {
+      const r = db.getPassport(nodeId);
+      if (!r) return null;
+      const payload = JSON.parse(r.payload);
+      const children = db.getChildren(nodeId);
+      return {
+        id: nodeId,
+        agent: payload.sub,
+        permissions: payload.permissions.map((p: { action: string }) => p.action),
+        maxSpend: payload.limits.maxSpend,
+        revoked: db.isRevoked(nodeId),
+        children: children.map(buildNode).filter(Boolean),
+      };
+    }
+
+    return c.json(buildNode(id));
+  });
+
   app.get('/v1/passports/:id/validate', (c) => {
     const row = db.getPassport(c.req.param('id'));
     if (!row) return c.json({ error: 'Passport not found' }, 404);

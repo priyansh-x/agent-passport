@@ -275,6 +275,42 @@ describe('Passport Authority API', () => {
     });
   });
 
+  describe('GET /v1/passports/:id/tree', () => {
+    it('returns delegation tree', async () => {
+      const parent = await req('POST', '/v1/passports', {
+        principal: 'user:alice@test.com',
+        agent: 'agent:root',
+        permissions: ['read', 'write'],
+        limits: { maxSpend: 500 },
+      });
+      const { id: parentId } = await parent.json();
+
+      await req('POST', `/v1/passports/${parentId}/delegate`, {
+        agent: 'agent:child-a',
+        permissions: ['read'],
+        limits: { maxSpend: 100 },
+      });
+
+      await req('POST', `/v1/passports/${parentId}/delegate`, {
+        agent: 'agent:child-b',
+        permissions: ['write'],
+        limits: { maxSpend: 200 },
+      });
+
+      const res = await req('GET', `/v1/passports/${parentId}/tree`);
+      const tree = await res.json();
+      expect(tree.id).toBe(parentId);
+      expect(tree.agent).toBe('agent:root');
+      expect(tree.children).toHaveLength(2);
+      expect(tree.children[0].agent).toBeTruthy();
+    });
+
+    it('returns 404 for unknown passport', async () => {
+      const res = await req('GET', '/v1/passports/unknown/tree');
+      expect(res.status).toBe(404);
+    });
+  });
+
   describe('GET /v1/stats', () => {
     it('returns aggregate stats', async () => {
       await req('POST', '/v1/passports', {
