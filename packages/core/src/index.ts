@@ -21,6 +21,7 @@ export { authorizeBatch, type BatchAction, type BatchResult } from './batch.js';
 export { and, or, not, hasPermission, maxSpendBelow, isAgent, isPrincipal, notExpiredWithin, type ConditionFn } from './condition.js';
 export { toBase64Url, fromBase64Url, encodePayload, decodePayload } from './encoding.js';
 export { createSnapshot, serializeSnapshot, deserializeSnapshot, type PassportSnapshot } from './snapshot.js';
+export { getTestIssuer, resetTestIssuer, createTestPassport, createTestDelegation, createExpiredPassport } from './testing.js';
 export type {
   Permission,
   SpendLimit,
