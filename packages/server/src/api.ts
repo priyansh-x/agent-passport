@@ -5,6 +5,7 @@ import { PassportDB } from './db.js';
 import { rateLimiter } from './rate-limit.js';
 import { WebhookManager } from './webhooks.js';
 import { requestLogger, type LoggerOptions } from './logger.js';
+import { getOpenApiSpec } from './openapi.js';
 
 export interface ApiOptions {
   cors?: boolean;
@@ -28,6 +29,8 @@ export function createApi(issuer: PassportIssuer, db: PassportDB, options: ApiOp
   app.use('/v1/*', rateLimiter({ windowMs: 60_000, maxRequests: 100 }));
 
   app.get('/health', (c) => c.json({ status: 'ok' }));
+
+  app.get('/openapi.json', (c) => c.json(getOpenApiSpec()));
 
   app.get('/v1/passports', (c) => {
     const rows = db.listPassports();
