@@ -6,6 +6,7 @@ export { matchesPermission, authorize, isSubsetPermissions } from './policy.js';
 export { generateKeyPair, sign, verify, toHex, fromHex } from './crypto.js';
 export { serializePassport, deserializePassport } from './token.js';
 export { ScopeRegistry, createDefaultRegistry, DEFAULT_SCOPES, type ScopeDefinition } from './scopes.js';
+export { validatePassport, type ValidationResult } from './validator.js';
 export type {
   Permission,
   SpendLimit,
