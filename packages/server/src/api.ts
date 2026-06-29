@@ -7,6 +7,7 @@ import { WebhookManager } from './webhooks.js';
 import { requestLogger, type LoggerOptions } from './logger.js';
 import { getOpenApiSpec } from './openapi.js';
 import { checkHealth } from './health.js';
+import { getPrometheusMetrics } from './metrics.js';
 
 export interface ApiOptions {
   cors?: boolean;
@@ -32,6 +33,11 @@ export function createApi(issuer: PassportIssuer, db: PassportDB, options: ApiOp
   app.get('/health', (c) => c.json(checkHealth(db)));
 
   app.get('/openapi.json', (c) => c.json(getOpenApiSpec()));
+
+  app.get('/metrics', (c) => {
+    c.header('Content-Type', 'text/plain; version=0.0.4');
+    return c.text(getPrometheusMetrics(db));
+  });
 
   app.get('/v1/passports', (c) => {
     const rows = db.listPassports();
