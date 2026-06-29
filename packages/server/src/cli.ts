@@ -5,6 +5,7 @@ import { createApi } from './api.js';
 import { PassportDB } from './db.js';
 import { WebhookManager } from './webhooks.js';
 import { ExpiryWatcher } from './expiry-watcher.js';
+import { requestLogger } from './logger.js';
 
 const args = process.argv.slice(2);
 
@@ -45,7 +46,7 @@ const enableCors = args.includes('--cors');
 const issuer = new PassportIssuer();
 const db = new PassportDB(dbPath);
 const webhooks = new WebhookManager();
-const app = createApi(issuer, db, { cors: enableCors, webhooks });
+const app = createApi(issuer, db, { cors: enableCors, webhooks, logger: true });
 
 const watcher = new ExpiryWatcher(db, webhooks);
 watcher.start();

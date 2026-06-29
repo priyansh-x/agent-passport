@@ -4,10 +4,12 @@ import { PassportIssuer, serializePassport, validatePassport } from '@passport-a
 import { PassportDB } from './db.js';
 import { rateLimiter } from './rate-limit.js';
 import { WebhookManager } from './webhooks.js';
+import { requestLogger, type LoggerOptions } from './logger.js';
 
 export interface ApiOptions {
   cors?: boolean;
   webhooks?: WebhookManager;
+  logger?: LoggerOptions | boolean;
 }
 
 export function createApi(issuer: PassportIssuer, db: PassportDB, options: ApiOptions = {}) {
@@ -16,6 +18,11 @@ export function createApi(issuer: PassportIssuer, db: PassportDB, options: ApiOp
 
   if (options.cors) {
     app.use('*', cors());
+  }
+
+  if (options.logger) {
+    const logOpts = typeof options.logger === 'object' ? options.logger : {};
+    app.use('*', requestLogger(logOpts));
   }
 
   app.use('/v1/*', rateLimiter({ windowMs: 60_000, maxRequests: 100 }));
