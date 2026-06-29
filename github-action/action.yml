@@ -1,0 +1,49 @@
+name: 'Agent Passport Check'
+description: 'Validate agent passports in CI — catch expired tokens, scope escalation, and over-broad permissions before they ship.'
+author: 'priyansh-x'
+branding:
+  icon: 'shield'
+  color: 'yellow'
+
+inputs:
+  token:
+    description: 'A single passport token (ap1.*) to validate. Optional if `policy-file` is set.'
+    required: false
+    default: ''
+  policy-file:
+    description: 'Path to a JSON file of passport definitions / tokens to validate.'
+    required: false
+    default: '.passport/policy.json'
+  deny-wildcards:
+    description: 'Fail if any passport grants "*" or "<resource>:*" wildcard permissions.'
+    required: false
+    default: 'false'
+  max-risk:
+    description: 'Highest allowed permission risk: low | medium | high. Anything above fails the check.'
+    required: false
+    default: 'high'
+  fail-on-expired:
+    description: 'Fail if any passport is already expired.'
+    required: false
+    default: 'true'
+
+outputs:
+  checked:
+    description: 'Number of passports checked.'
+    value: ${{ steps.check.outputs.checked }}
+  violations:
+    description: 'Number of violations found.'
+    value: ${{ steps.check.outputs.violations }}
+
+runs:
+  using: 'composite'
+  steps:
+    - id: check
+      shell: bash
+      run: node ${{ github.action_path }}/validate.mjs
+      env:
+        INPUT_TOKEN: ${{ inputs.token }}
+        INPUT_POLICY_FILE: ${{ inputs.policy-file }}
+        INPUT_DENY_WILDCARDS: ${{ inputs.deny-wildcards }}
+        INPUT_MAX_RISK: ${{ inputs.max-risk }}
+        INPUT_FAIL_ON_EXPIRED: ${{ inputs.fail-on-expired }}

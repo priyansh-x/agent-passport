@@ -1,0 +1,24 @@
+{
+  "passports": [
+    {
+      "id": "root",
+      "agent": "agent:orchestrator",
+      "permissions": ["calendar:read", "calendar:write", "email:send"],
+      "limits": { "maxSpend": 500, "currency": "USD" }
+    },
+    {
+      "id": "drafter",
+      "agent": "agent:email-drafter",
+      "permissions": ["email:send"],
+      "parent": "root",
+      "limits": { "maxSpend": 0, "currency": "USD" }
+    },
+    {
+      "id": "scheduler",
+      "agent": "agent:scheduler",
+      "permissions": ["calendar:read"],
+      "parent": "root",
+      "limits": { "maxSpend": 0, "currency": "USD" }
+    }
+  ]
+}

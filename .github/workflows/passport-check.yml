@@ -1,0 +1,21 @@
+name: Passport Check
+
+on:
+  push:
+    branches: [main]
+    paths: ['.passport/**', 'github-action/**']
+  pull_request:
+    paths: ['.passport/**', 'github-action/**']
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate agent passports
+        uses: ./github-action
+        with:
+          policy-file: .passport/policy.json
+          deny-wildcards: true
+          max-risk: medium
