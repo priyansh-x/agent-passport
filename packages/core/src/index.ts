@@ -14,6 +14,7 @@ export { inspectPassport, printInspection, type InspectionReport } from './inspe
 export { validateChain, type ChainLink, type ChainValidation } from './chain.js';
 export { TEMPLATES, fromTemplate, type PassportTemplate } from './templates.js';
 export { redactPassport, type RedactOptions } from './redact.js';
+export { fingerprint, shortId } from './fingerprint.js';
 export type {
   Permission,
   SpendLimit,
