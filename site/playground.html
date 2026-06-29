@@ -97,8 +97,9 @@
     }
 
     /* ── Grid ── */
-    .grid { display: grid; grid-template-columns: 1fr 420px; gap: 24px; align-items: start; }
+    .grid { display: grid; grid-template-columns: 1fr 420px; gap: 24px; align-items: stretch; }
     @media (max-width: 920px) { .grid { grid-template-columns: 1fr; } }
+    .console-col { position: relative; }
 
     .stack { display: flex; flex-direction: column; gap: 20px; }
 
@@ -158,6 +159,24 @@
     .risk-low { background: var(--allow); }
     .risk-medium { background: #D97706; }
     .risk-high { background: var(--deny); }
+
+    .perm-add { display: flex; gap: 8px; margin-top: 10px; }
+    .perm-add input {
+      flex: 1; padding: 8px 12px;
+      background: var(--gray-50); border: 1px solid var(--gray-200);
+      border-radius: 8px; color: var(--black);
+      font-family: var(--mono); font-size: 12px;
+    }
+    .perm-add input:focus { outline: none; border-color: var(--teal); background: var(--white); }
+    .perm-add .btn { padding: 8px 14px; flex-shrink: 0; }
+    .perm-note {
+      margin-top: 10px; font-size: 12px; line-height: 1.6; color: var(--gray-500);
+    }
+    .perm-note code {
+      font-family: var(--mono); font-size: 11px;
+      background: var(--gray-100); color: var(--teal-dark);
+      padding: 1px 5px; border-radius: 4px;
+    }
 
     /* ── Buttons ── */
     .btn {
@@ -342,8 +361,18 @@
           </div>
 
           <div class="field">
-            <label>Permissions <span style="color:var(--muted)">— click to toggle</span></label>
+            <label>Permissions <span style="color:var(--gray-400)">— click to toggle</span></label>
             <div class="chips" id="perm-chips"></div>
+            <div class="perm-add">
+              <input type="text" id="in-custom-perm" placeholder="add your own — e.g. orders:refund" />
+              <button class="btn btn-ghost" id="btn-add-perm" type="button">+ Define</button>
+            </div>
+            <p class="perm-note">
+              You define your own vocabulary — permissions are just <code>resource:action</code> strings.
+              The SDK doesn't ship a fixed list; <code>flights:search</code> means whatever your app decides.
+              Risk is inferred from the verb (<code>:read</code> low, <code>:write</code>/<code>:send</code> medium,
+              <code>:delete</code>/<code>:*</code> high), or you register it in a <code>ScopeRegistry</code>.
+            </p>
           </div>
 
           <div class="field-row">
@@ -459,12 +488,14 @@
       </div>
 
       <!-- EVENT CONSOLE -->
-      <div class="console">
-        <div class="console-head">
-          <div class="console-dots"><span></span><span></span><span></span></div>
-          passportEvents — live
+      <div class="console-col">
+        <div class="console">
+          <div class="console-head">
+            <div class="console-dots"><span></span><span></span><span></span></div>
+            passportEvents — live
+          </div>
+          <div class="console-body" id="log"></div>
         </div>
-        <div class="console-body" id="log"></div>
       </div>
     </div>
 
@@ -483,6 +514,14 @@
     //  Agent Passport — faithful in-browser engine
     //  Mirrors packages/core policy.ts + sdk/agent-passport.ts
     // ─────────────────────────────────────────────────────────────
+
+    // Risk inference — mirrors core/scopes.ts riskLevel()
+    function inferRisk(action){
+      if (action === '*' || action.endsWith(':*') || action.endsWith(':delete') || action.endsWith(':drop')) return 'high';
+      if (action.endsWith(':write') || action.endsWith(':send') || action.endsWith(':charge') || action.endsWith(':book') || action.endsWith(':refund')) return 'medium';
+      if (action.endsWith(':read') || action.endsWith(':search') || action.endsWith(':list')) return 'low';
+      return 'medium';
+    }
 
     const ALL_PERMS = [
       { action: 'flights:search', risk: 'low' },
@@ -765,6 +804,29 @@
       document.getElementById('copy-install').textContent = 'copied ✓';
       setTimeout(()=>document.getElementById('copy-install').innerHTML='npm install @passport-agent/sdk ⧉',1300);
     };
+
+    // ── define a custom permission ──
+    function addCustomPerm(){
+      const input = document.getElementById('in-custom-perm');
+      const action = input.value.trim().toLowerCase();
+      if (!action) return;
+      if (!/^[a-z0-9_-]+(:[a-z0-9_*-]+)?$/.test(action)){
+        log(`"${action}" is not a valid permission — use resource:action`, 'deny');
+        return;
+      }
+      if (!ALL_PERMS.some(p => p.action === action)){
+        ALL_PERMS.push({ action, risk: inferRisk(action) });
+        log(`defined permission "${action}" (${inferRisk(action)} risk)`, 'event');
+      }
+      selectedPerms.add(action);
+      input.value = '';
+      renderChips(document.getElementById('perm-chips'), selectedPerms, 'root');
+      renderChips(document.getElementById('sub-perm-chips'), selectedSubPerms, 'sub');
+    }
+    document.getElementById('btn-add-perm').onclick = addCustomPerm;
+    document.getElementById('in-custom-perm').addEventListener('keydown', e => {
+      if (e.key === 'Enter'){ e.preventDefault(); addCustomPerm(); }
+    });
 
     // ── init ──
     renderChips(document.getElementById('perm-chips'), selectedPerms = new Set(['flights:search','flights:book','email:send']), 'root');
