@@ -1,10 +1,3 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".github/logo-dark.svg"/>
-    <img src=".github/logo.svg" width="80" alt="Agent Passport"/>
-  </picture>
-</p>
-
 <h1 align="center">Agent Passport</h1>
 
 <p align="center">
