@@ -157,6 +157,36 @@ export class PassportDB {
     return revoked;
   }
 
+  searchPassports(filters: { agent?: string; principal?: string; status?: 'active' | 'revoked'; limit?: number }) {
+    let sql = 'SELECT p.* FROM passports p';
+    const params: unknown[] = [];
+
+    if (filters.status === 'revoked') {
+      sql += ' INNER JOIN revocations r ON p.id = r.passport_id';
+    } else if (filters.status === 'active') {
+      sql += ' LEFT JOIN revocations r ON p.id = r.passport_id WHERE r.passport_id IS NULL';
+    }
+
+    const conditions: string[] = [];
+    if (filters.agent) {
+      conditions.push("json_extract(p.payload, '$.sub') LIKE ?");
+      params.push(`%${filters.agent}%`);
+    }
+    if (filters.principal) {
+      conditions.push("json_extract(p.payload, '$.principal') LIKE ?");
+      params.push(`%${filters.principal}%`);
+    }
+
+    if (conditions.length > 0) {
+      sql += (sql.includes('WHERE') ? ' AND ' : ' WHERE ') + conditions.join(' AND ');
+    }
+
+    sql += ' ORDER BY p.created_at DESC LIMIT ?';
+    params.push(filters.limit ?? 50);
+
+    return this.db.prepare(sql).all(...params) as Array<{ id: string; payload: string; signature: string; public_key: string }>;
+  }
+
   getStats() {
     const totalPassports = (this.db.prepare('SELECT COUNT(*) as c FROM passports').get() as { c: number }).c;
     const activePassports = totalPassports - (this.db.prepare('SELECT COUNT(*) as c FROM revocations').get() as { c: number }).c;

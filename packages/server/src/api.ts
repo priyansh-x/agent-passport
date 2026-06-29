@@ -38,6 +38,17 @@ export function createApi(issuer: PassportIssuer, db: PassportDB, options: ApiOp
     return c.json({ passports });
   });
 
+  app.get('/v1/passports/search', (c) => {
+    const agent = c.req.query('agent');
+    const principal = c.req.query('principal');
+    const status = c.req.query('status') as 'active' | 'revoked' | undefined;
+    const limit = parseInt(c.req.query('limit') ?? '50');
+
+    const rows = db.searchPassports({ agent, principal, status, limit });
+    const passports = rows.map((r) => ({ id: r.id, ...JSON.parse(r.payload) }));
+    return c.json({ passports, count: passports.length });
+  });
+
   app.post('/v1/passports', async (c) => {
     const body = await c.req.json<{
       principal: string;
