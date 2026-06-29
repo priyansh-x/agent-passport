@@ -12,6 +12,7 @@ export { formatPassport, formatPassportTable } from './format.js';
 export { PolicyBuilder, policy, type PolicyCheck, type PolicyContext, type PolicyDecision } from './policy-builder.js';
 export { inspectPassport, printInspection, type InspectionReport } from './inspector.js';
 export { validateChain, type ChainLink, type ChainValidation } from './chain.js';
+export { TEMPLATES, fromTemplate, type PassportTemplate } from './templates.js';
 export type {
   Permission,
   SpendLimit,
