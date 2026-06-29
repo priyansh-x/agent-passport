@@ -57,4 +57,12 @@ export const api = {
     passportId
       ? request<{ entries: AuditEntry[] }>(`/passports/${passportId}/audit`)
       : request<{ entries: AuditEntry[] }>('/audit?limit=100'),
+
+  getStats: () =>
+    request<{
+      passports: { total: number; active: number; revoked: number };
+      authorizations: { total: number; allowed: number; denied: number };
+      spend: { total: number };
+      delegations: number;
+    }>('/stats'),
 };

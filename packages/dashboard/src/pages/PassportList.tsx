@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, type PassportData } from '../lib/api'
 import { Shield, ShieldOff, Clock, User, ChevronRight, ChevronDown, Copy, Check, GitBranch } from 'lucide-react'
+import { StatsOverview } from '../components/StatsOverview'
 
 interface PassportWithStatus {
   passport: PassportData
@@ -87,6 +88,7 @@ export function PassportList() {
 
   return (
     <div className="space-y-3">
+      <StatsOverview />
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-semibold">Active Passports</h2>
         <span className="text-xs text-neutral-400">{passports.length} total</span>
