@@ -3,6 +3,8 @@ import { serve } from '@hono/node-server';
 import { PassportIssuer } from '@passport-agent/core';
 import { createApi } from './api.js';
 import { PassportDB } from './db.js';
+import { WebhookManager } from './webhooks.js';
+import { ExpiryWatcher } from './expiry-watcher.js';
 
 const args = process.argv.slice(2);
 
@@ -42,7 +44,11 @@ const enableCors = args.includes('--cors');
 
 const issuer = new PassportIssuer();
 const db = new PassportDB(dbPath);
-const app = createApi(issuer, db, { cors: enableCors });
+const webhooks = new WebhookManager();
+const app = createApi(issuer, db, { cors: enableCors, webhooks });
+
+const watcher = new ExpiryWatcher(db, webhooks);
+watcher.start();
 
 console.log(`
   ╔══════════════════════════════════════════╗
