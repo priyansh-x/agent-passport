@@ -16,8 +16,17 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
-  "keywords": ["agent", "passport", "mcp", "middleware", "ai", "tool-guard"],
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "agent",
+    "passport",
+    "mcp",
+    "middleware",
+    "ai",
+    "tool-guard"
+  ],
   "engines": {
     "node": ">=18"
   },
@@ -28,6 +37,7 @@
     "directory": "packages/mcp-plugin"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@passport-agent/core": "workspace:*"
   },
   "devDependencies": {
