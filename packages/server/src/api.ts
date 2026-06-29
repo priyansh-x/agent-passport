@@ -227,6 +227,22 @@ export function createApi(issuer: PassportIssuer, db: PassportDB, options: ApiOp
     return c.json({ entries });
   });
 
+  app.post('/v1/passports/:id/authorize-bulk', async (c) => {
+    const id = c.req.param('id');
+    const body = await c.req.json<{ actions: string[] }>();
+
+    const signed = issuer.getPassport(id);
+    if (!signed) return c.json({ error: 'Passport not found' }, 404);
+
+    const results = body.actions.map((action) => {
+      const result = issuer.authorize(signed, action, 0);
+      return { action, allowed: result.allowed, reason: result.reason };
+    });
+
+    const allAllowed = results.every((r) => r.allowed);
+    return c.json({ allAllowed, results });
+  });
+
   app.get('/v1/stats', (c) => {
     return c.json(db.getStats());
   });

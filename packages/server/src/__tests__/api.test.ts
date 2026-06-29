@@ -275,6 +275,27 @@ describe('Passport Authority API', () => {
     });
   });
 
+  describe('POST /v1/passports/:id/authorize-bulk', () => {
+    it('checks multiple actions at once', async () => {
+      const create = await req('POST', '/v1/passports', {
+        principal: 'user:alice@test.com',
+        agent: 'agent:bot',
+        permissions: ['read', 'write'],
+      });
+      const { id } = await create.json();
+
+      const res = await req('POST', `/v1/passports/${id}/authorize-bulk`, {
+        actions: ['read', 'write', 'delete'],
+      });
+      const data = await res.json();
+      expect(data.allAllowed).toBe(false);
+      expect(data.results).toHaveLength(3);
+      expect(data.results[0].allowed).toBe(true);
+      expect(data.results[1].allowed).toBe(true);
+      expect(data.results[2].allowed).toBe(false);
+    });
+  });
+
   describe('GET /v1/passports/:id/tree', () => {
     it('returns delegation tree', async () => {
       const parent = await req('POST', '/v1/passports', {
