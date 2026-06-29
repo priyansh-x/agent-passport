@@ -4,6 +4,7 @@ export { createPassportAuthority } from './authority.js';
 export { requirePassport, withBudget, withPassportAsync, createGuardedProxy } from './guards.js';
 export { PassportEvents, passportEvents } from './events.js';
 export { withRetry, type RetryOptions } from './retry.js';
+export { runWithPassport, getCurrentPassport, requireCurrentPassport } from './context.js';
 export type { AuthorityConfig } from './authority.js';
 export type {
   Permission,
